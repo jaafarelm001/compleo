@@ -12,6 +12,6 @@
 //  est régénéré automatiquement : tu peux le laisser tel quel.
 // ============================================================
 window.LOVE_CONFIG = {
-  SUPABASE_URL: 'https://TON-PROJET.supabase.co',
-  SUPABASE_ANON_KEY: 'TA_CLE_ANON_PUBLIQUE'
+  SUPABASE_URL: 'https://wezcckqftoervxdshwqg.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_VUSRY7OvAgqsWKFlwQoycQ_BuPnKT7J'
 };
