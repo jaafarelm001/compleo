@@ -1,4 +1,4 @@
-:root{
+﻿:root{
   --rose:#e8467c;--rose-2:#ff7aa2;--deep:#a3194f;--wine:#4d1229;
   --ink:#4a1830;--muted:#94607a;
   --card:rgba(255,255,255,.66);--card-strong:rgba(255,255,255,.9);
@@ -20,8 +20,6 @@ body::before{
     radial-gradient(circle at 88% 92%,#f1c0e6 0,transparent 46%),
     linear-gradient(160deg,#ffe4ec 0%,#ffcfdd 45%,#f6bfd6 75%,#e8b9e3 100%);
 }
-
-/* Cœurs qui flottent en arrière-plan */
 .sky{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .fh{position:absolute;bottom:-50px;width:var(--sz);height:var(--sz);color:var(--c);opacity:0;animation:rise var(--d) linear forwards}
 .fh svg,.burst svg,.rain svg,.ic svg,.beat svg{width:100%;height:100%;display:block}
@@ -33,11 +31,9 @@ body::before{
   90%{opacity:var(--o)}
   100%{transform:translate3d(calc(var(--sw) * -.5),-115vh,0) rotate(-12deg);opacity:0}
 }
-
 .wrap{max-width:1000px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom))}
 .banner{background:var(--card-strong);border:1px dashed var(--rose);color:var(--deep);border-radius:16px;padding:10px 14px;font-size:.88rem;font-weight:600;margin-bottom:14px;text-align:center}
 .banner.warn{border-color:#c77d00;color:#7a4b00}
-
 header{text-align:center;margin:6px 0 20px}
 .names{
   font-family:'Great Vibes',cursive;font-weight:400;font-size:clamp(2.7rem,10vw,4.6rem);line-height:1.1;
@@ -54,17 +50,13 @@ header{text-align:center;margin:6px 0 20px}
 .sync i{width:8px;height:8px;border-radius:50%;background:#bbb;display:inline-block}
 .sync.on i{background:#2fb36d;box-shadow:0 0 0 3px rgba(47,179,109,.18)}
 .sync.off i{background:#d9534f}
-
 .grid{display:grid;gap:16px;grid-template-columns:1fr}
 @media(min-width:780px){.grid{grid-template-columns:1.15fr 1fr}.c-main{grid-row:span 2}}
-
 .card{
   background:var(--card);border:1px solid rgba(255,255,255,.75);border-radius:var(--radius);padding:22px;
   box-shadow:var(--shadow);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);position:relative;
 }
 .card h2{font-size:.8rem;font-weight:700;color:var(--deep);text-transform:uppercase;letter-spacing:.09em;display:flex;align-items:center;gap:8px}
-
-/* Anneau de progression */
 .ring{position:relative;width:min(230px,62vw);aspect-ratio:1;margin:18px auto 8px}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
 .ring .track{stroke:rgba(232,70,124,.14)}
@@ -78,7 +70,6 @@ header{text-align:center;margin:6px 0 20px}
 .tiny{color:var(--muted);font-size:.8rem;font-weight:600;margin-top:10px}
 .msg{text-align:center;font-weight:700;margin:4px 0 14px;min-height:1.4em}
 .msg.left{text-align:left;margin:0}
-
 .field{
   width:100%;font:inherit;font-size:16px;padding:13px 16px;border-radius:16px;border:1.5px solid var(--line);
   background:var(--card-strong);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;
@@ -86,7 +77,6 @@ header{text-align:center;margin:6px 0 20px}
 .field:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(232,70,124,.15)}
 .field:disabled{opacity:.6}
 .field.center{text-align:center;letter-spacing:.3em;font-weight:700;font-size:1.3rem}
-
 .btn{
   appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:1.06rem;color:#fff;width:100%;
   padding:15px 20px;min-height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:10px;
@@ -103,14 +93,11 @@ header{text-align:center;margin:6px 0 20px}
 .meta{display:flex;justify-content:center;margin-top:14px}
 .pill{background:var(--card-strong);border-radius:999px;padding:7px 14px;font-weight:600;font-size:.9rem;color:var(--muted)}
 .pill b{color:var(--deep)}
-
 .cd{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
 .cd div{background:var(--card-strong);border-radius:16px;padding:10px 4px;text-align:center}
 .cd b{display:block;font-size:clamp(1.3rem,6vw,1.7rem);font-variant-numeric:tabular-nums;color:var(--deep)}
 .cd span{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-
 .clash-row{display:flex;align-items:center;gap:16px;margin:14px 0 16px}
-
 form label{display:block;font-weight:700;font-size:.9rem;margin:14px 0 6px}
 form label.check{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--muted);cursor:pointer}
 form label.check input{width:18px;height:18px;accent-color:var(--rose)}
@@ -121,7 +108,6 @@ form label.check input{width:18px;height:18px;accent-color:var(--rose)}
 .actions{margin-top:16px}
 .hint{background:rgba(232,70,124,.1);color:var(--deep);border-radius:14px;padding:9px 12px;font-weight:600;font-size:.86rem;margin-top:12px}
 .hint button{border:0;background:none;color:var(--rose);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
-
 .hist{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:14px;max-height:420px;overflow:auto;padding-right:2px}
 .hist li{display:flex;gap:12px;align-items:flex-start;background:var(--card-strong);padding:12px 12px 12px 14px;border-radius:16px;animation:slidein .4s ease}
 .hist li.empty{justify-content:center;color:var(--muted);font-weight:600}
@@ -133,10 +119,8 @@ form label.check input{width:18px;height:18px;accent-color:var(--rose)}
 .hist .del{border:0;background:transparent;color:var(--muted);font-size:1.3rem;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
 .hist .del:hover{color:var(--deep);background:rgba(232,70,124,.1)}
 @keyframes slidein{from{opacity:0;transform:translateY(6px)}}
-
 footer{text-align:center;color:var(--muted);font-weight:600;font-size:.85rem;margin-top:22px}
 footer button{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;margin-top:6px}
-
 .toast{
   position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,160%);
   background:var(--wine);color:#fff;padding:11px 12px 11px 18px;border-radius:999px;display:flex;gap:12px;align-items:center;
@@ -145,7 +129,6 @@ footer button{border:0;background:none;color:var(--muted);font:inherit;text-deco
 }
 .toast.show{transform:translate(-50%,0)}
 .toast button{border:0;background:#fff;color:var(--wine);font:inherit;font-weight:700;font-size:.85rem;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
-
 .modal{position:fixed;inset:0;background:rgba(77,18,41,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;place-items:center;z-index:70;padding:20px}
 .modal.open{display:grid}
 .modal .card{max-width:380px;width:100%;text-align:center;background:var(--card-strong);animation:pop .4s ease}
@@ -154,8 +137,6 @@ footer button{border:0;background:none;color:var(--muted);font:inherit;text-deco
 .modal form .field{margin-bottom:12px}
 .modal .err{color:#c0392b;font-weight:700;font-size:.88rem;min-height:1.2em;margin-bottom:8px}
 .modal .link{border:0;background:none;color:var(--muted);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;margin-top:12px}
-
-/* Animations d'amour */
 .burst{position:fixed;width:22px;height:22px;pointer-events:none;z-index:80;transform:translate(-50%,-50%);animation:burst 1s cubic-bezier(.15,.8,.3,1) forwards}
 .burst.emoji{width:auto;height:auto;font-size:22px;line-height:1}
 @keyframes burst{
@@ -167,5 +148,4 @@ footer button{border:0;background:none;color:var(--muted);font:inherit;text-deco
 @keyframes fall{to{transform:translate3d(var(--sw),110vh,0) rotate(220deg);opacity:.3}}
 .shake{animation:shake .5s}
 @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
-
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
