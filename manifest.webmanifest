@@ -1,0 +1,15 @@
+{
+  "name": "Jaafar ♥ Audrey",
+  "short_name": "J ♥ A",
+  "description": "Notre petit compteur d'amour : compliments et clashs",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffe1ea",
+  "theme_color": "#e8467c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
