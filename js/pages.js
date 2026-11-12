@@ -4,7 +4,7 @@
 import { $, $$, esc, uuid, sb, q, load, send, cache, store, normalize, isOnline, log, PEOPLE } from './core.js';
 import { S, hooks, isJaafar, isAudrey, partnerName, nameOf } from './state.js';
 import {
-  ICON, MOODS, moodOf, moodLabel, timeIn, hourIn, dayIn, addDays, dayLabel, fmtDateTime, fmtDate, fmtDay, ago, until, untilText,
+  ICON, MOODS, moodOf, moodLabel, GESTURES, gestureOf, gestureLabel, timeIn, hourIn, dayIn, addDays, dayLabel, fmtDateTime, fmtDate, fmtDay, ago, until, untilText,
   toLocalInput, fromLocalInput, daysBetween, toast, toastError, overlay, confirmDialog, busy, skeleton, emptyState, errorBox, charCounter
 } from './ui.js';
 import { HEART, burstFrom, heartRain, confetti, buzz, reduced } from './fx.js';
@@ -62,28 +62,26 @@ function homePage(el) {
         </div>
       </article>
 
-      <article class="card span-3" id="h-count">
-        <div class="card-head"><h2>Prochaines retrouvailles</h2></div>
-        <div id="h-count-body"></div>
-      </article>
 
       <article class="card span-3">
         <div class="card-head"><h2>Nos moods du jour</h2><a class="link-btn" href="#/mood">Le mien</a></div>
         <div class="mood-pair" id="h-moods"></div>
       </article>
 
+      <article class="card span-3 gest-card">
+        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" id="g-all">Tout voir</button></div>
+        <div class="gest-row" id="g-fav"></div>
+      </article>
+
+      <article class="card span-3" id="h-count">
+        <div class="card-head"><h2>Prochaines retrouvailles</h2></div>
+        <div id="h-count-body"></div>
+      </article>
+
       <a class="card callout span-3" id="h-compl" href="#/compliments" hidden></a>
       <a class="card callout span-3" id="h-jc" hidden></a>
       <a class="card callout span-6" id="h-letters" href="#/capsules" hidden></a>
 
-      <article class="card span-3">
-        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2></div>
-        <div class="hug-row">
-          <button type="button" class="hug-btn" data-hug="hug"><span>🤗</span>Câlin</button>
-          <button type="button" class="hug-btn" data-hug="kiss"><span>😘</span>Bisou</button>
-          <button type="button" class="hug-btn" data-hug="pense"><span>💭</span>Je pense à toi</button>
-        </div>
-      </article>
 
       <a class="card callout span-3" id="h-q" href="#/question"></a>
 
@@ -108,7 +106,25 @@ function homePage(el) {
   ro ? ro.observe(arc) : window.addEventListener('resize', layoutArc);
   arc.addEventListener('dblclick', () => heartRain());
 
-  $$('[data-hug]', el).forEach((b) => b.addEventListener('click', () => sendHug(b)));
+  // gestes : les 8 plus utilisés sur l'accueil, tous les autres dans une feuille
+  const useKey = `gest-use:${me.id}`;
+  const favs = () => {
+    const use = store.get(useKey, {});
+    return GESTURES.map((g, i) => [g, (use[g.k] || 0) * 100 - i]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([g]) => g);
+  };
+  const gBtn = (g) => `<button type="button" class="gest-btn" data-hug="${g.k}" aria-label="Envoyer : ${esc(gestureLabel(g, me.name))}"><span>${g.e}</span>${esc(gestureLabel(g, me.name))}</button>`;
+  const renderFavs = () => {
+    const box = $('#g-fav', el);
+    box.innerHTML = favs().map(gBtn).join('');
+    $$('[data-hug]', box).forEach((b) => b.addEventListener('click', () => sendHug(b)));
+  };
+  renderFavs();
+  $('#g-all', el).addEventListener('click', () => {
+    const o = overlay(`<div class="card sheet gest-sheet"><div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+      <div class="gest-row all">${GESTURES.map(gBtn).join('')}</div></div>`);
+    $('[data-close]', o.el).addEventListener('click', () => o.close());
+    $$('[data-hug]', o.el).forEach((b) => b.addEventListener('click', async () => { await sendHug(b); setTimeout(() => o.close(), 350); }));
+  });
   $('#h-hero', el).addEventListener('click', (e) => { if (!e.target.closest('a,button')) hooks.shootingStar && hooks.shootingStar(); });
 
   const greet = () => {
@@ -188,7 +204,7 @@ function homePage(el) {
     }</span></span>${ICON.chev}`;
     // stats
     const st = d.stats || {};
-    const items = [[c.unlocked || 0, 'compliments'], [st.answers || 0, 'questions à deux'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'câlins envoyés'], [st.memories || 0, 'souvenirs']];
+    const items = [[c.unlocked || 0, 'compliments'], [st.answers || 0, 'questions à deux'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'gestes envoyés'], [st.memories || 0, 'souvenirs']];
     $('#h-stats', el).innerHTML = items.map(([v, l]) => `<div class="stat"><b>${typeof v === 'number' ? v.toLocaleString('fr-FR') : v}</b><span>${l}</span></div>`).join('');
   }
 
@@ -235,12 +251,14 @@ function homePage(el) {
   const iv = setInterval(tickClocks, 1000);
 
   async function sendHug(btn) {
+    const g = gestureOf(btn.dataset.hug), label = gestureLabel(g, me.name);
     buzz(18);
-    burstFrom(btn, { emojis: btn.dataset.hug === 'kiss' ? ['💋', '💗', '😘'] : btn.dataset.hug === 'pense' ? ['💭', '✨', '💗'] : ['🤗', '💗', '💞'], n: 14 });
+    burstFrom(btn, { emojis: [g.e, '💗', '✨'], n: 14 });
     try {
-      const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: btn.dataset.hug } });
-      const word = btn.dataset.hug === 'kiss' ? 'Bisou envoyé' : btn.dataset.hug === 'pense' ? 'Pensée envoyée' : 'Câlin envoyé';
-      toast(r.queued ? `${word} dès le retour du réseau` : `${word} à ${pn} 💞`);
+      const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: g.k } });
+      toast(r.queued ? `${g.e} « ${label} » partira dès le retour du réseau` : `${g.e} « ${label} » envoyé à ${pn}`);
+      const use = store.get(useKey, {}); use[g.k] = (use[g.k] || 0) + 1; store.set(useKey, use);
+      if ($('#g-fav', el)) renderFavs();
     } catch (e) { toastError(normalize(e)); }
   }
 

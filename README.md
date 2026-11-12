@@ -10,7 +10,7 @@ Lien : https://jaafarelm001.github.io/compleo/
 | Espace | Ce que ça fait |
 |---|---|
 | Connexion | Choix du prénom (Jaafar ou Audrey) + PIN à 6 chiffres. 3 erreurs → pause de 30 s, jamais de blocage définitif. Session gardée sur l'appareil. |
-| Accueil | Vos deux heures locales reliées par un arc, compte à rebours des retrouvailles, moods du jour, câlin / bisou / « je pense à toi », question du jour, chiffres du couple. |
+| Accueil | Vos deux heures locales reliées par un arc, compte à rebours des retrouvailles, moods du jour, 24 gestes (câlin, bisou, « je pense à toi », bonne nuit…), question du jour, chiffres du couple. |
 | Mood | 24 moods au choix, un par jour et par personne (modifiable dans la journée), note facultative, historique de 14 jours pour les deux. |
 | Compliments d'Audrey | Écrits et gérés **uniquement par Audrey** (écrire, règle de déblocage, débloquer, re-sceller, modifier, supprimer, aperçu). Jaafar ne voit que les débloqués, avec cartes qui se retournent et badge de nouveauté. |
 | Compliments de Jaafar | Jaafar écrit à Audrey ; **Audrey choisit la règle** : limite (au maximum N par jour, semaine ou mois), objectif (N à atteindre, dépassement permis) ou pause. Appliquée côté serveur. Jaafar peut retirer un compliment pendant 10 minutes. |

@@ -44,6 +44,37 @@ export const MOODS = [
   { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' },
   { k: 'furieux',     e: '😡', m: 'Très énervé',   f: 'Très énervée',  c: '#ff4d5e' }
 ];
+/* ---------------- Gestes ----------------
+ * l : libellé du bouton (s = prénom de celui qui envoie) ; say : ce que voit celui qui reçoit (p = prénom de l'envoyeur) */
+export const GESTURES = [
+  { k: 'hug',         e: '🤗', l: 'Câlin',              say: (p) => `${p} t'envoie un câlin` },
+  { k: 'kiss',        e: '😘', l: 'Bisou',              say: (p) => `${p} t'envoie un bisou` },
+  { k: 'pense',       e: '💭', l: 'Je pense à toi',     say: (p) => `${p} pense à toi` },
+  { k: 'jetaime',     e: '🫶', l: 'Je t\'aime',          say: (p) => `${p} te dit je t'aime` },
+  { k: 'manque',      e: '🥺', l: 'Tu me manques',      say: (p) => `Tu manques à ${p}` },
+  { k: 'serre',       e: '🫂', l: 'Câlin très serré',   say: (p) => `${p} te serre très fort dans ses bras` },
+  { k: 'bonjour',     e: '☀️', l: 'Bonjour mon cœur',   say: (p) => `${p} te dit bonjour, mon cœur` },
+  { k: 'bonnenuit',   e: '🌙', l: 'Bonne nuit',         say: (p) => `${p} te souhaite bonne nuit` },
+  { k: 'main',        e: '👫', l: 'Main dans la main',  say: (p) => `${p} te tient la main` },
+  { k: 'front',       e: '😚', l: 'Bisou sur le front', say: (p) => `${p} te fait un bisou sur le front` },
+  { k: 'vole',        e: '💋', l: 'Bisou volé',         say: (p) => `${p} te vole un bisou` },
+  { k: 'reves',       e: '💤', l: 'Beaux rêves',        say: (p) => `${p} te souhaite de beaux rêves` },
+  { k: 'the',         e: '🍵', l: 'Un thé pour toi',    say: (p) => `${p} t'offre un thé` },
+  { k: 'rose',        e: '🌹', l: 'Une rose',           say: (p) => `${p} t'offre une rose` },
+  { k: 'taquine',     e: '😜', l: 'Je te taquine',      say: (p) => `${p} te taquine` },
+  { k: 'chatouilles', e: '🤭', l: 'Chatouilles',        say: (p) => `${p} te fait des chatouilles` },
+  { k: 'coude',       e: '👉', l: 'Coup de coude',      say: (p) => `${p} te donne un petit coup de coude` },
+  { k: 'souris',      e: '😊', l: 'Souris !',           say: (p) => `${p} veut te voir sourire` },
+  { k: 'appelle',     e: '📞', l: 'Appelle-moi',        say: (p) => `${p} aimerait que tu l'appelles` },
+  { k: 'attention',   e: '👀', l: 'Besoin d\'attention', say: (p) => `${p} a besoin d'un peu d'attention` },
+  { k: 'courage',     e: '💪', l: 'Courage',            say: (p) => `${p} t'envoie plein de courage` },
+  { k: 'fier',        e: '🏅', l: (s) => (s === 'Audrey' ? 'Fière de toi' : 'Fier de toi'), say: (p) => `${p} est ${p === 'Audrey' ? 'fière' : 'fier'} de toi` },
+  { k: 'merci',       e: '💐', l: 'Merci',              say: (p) => `${p} te dit merci` },
+  { k: 'pardon',      e: '🙏', l: 'Pardon',             say: (p) => `${p} te demande pardon` }
+];
+export const gestureOf = (k) => GESTURES.find((g) => g.k === k) || GESTURES[0];
+export const gestureLabel = (g, sender) => (typeof g.l === 'function' ? g.l(sender) : g.l);
+
 export const moodOf = (k) => MOODS.find((m) => m.k === k) || null;
 export const moodLabel = (k, name) => { const m = moodOf(k); return m ? (name === 'Audrey' ? m.f : m.m) : ''; };
 

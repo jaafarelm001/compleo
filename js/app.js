@@ -1,7 +1,7 @@
 /* Jaafar ♥ Audrey — coque de l'appli : connexion, navigation, temps réel, présence, surprises. */
 import { $, $$, esc, sb, hasSdk, q, cache, store, outbox, send, uuid, normalize, isOnline, log, net, PEOPLE, VERSION } from './core.js';
 import { S, hooks, isJaafar, partnerName } from './state.js';
-import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
+import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
 import { HEART, startSky, burstFrom, heartRain, confetti, fireworks, buzz, reduced } from './fx.js';
 import { PAGES } from './pages.js';
 
@@ -519,19 +519,19 @@ function showHug(list) {
 function renderHug(list, done) {
   const pn = partnerName();
   const last = list[list.length - 1];
-  const em = { hug: '🤗', kiss: '😘', pense: '💭' }[last.kind] || '🤗';
-  const word = { hug: 'un câlin', kiss: 'un bisou', pense: 'une pensée' }[last.kind] || 'un câlin';
-  const txt = list.length > 1 ? `${pn} t'a envoyé ${list.length} attentions pendant ton absence` : `${pn} t'envoie ${word}`;
+  const g = gestureOf(last.kind), em = g.e;
+  const txt = list.length > 1 ? `${pn} t'a envoyé ${list.length} attentions pendant ton absence` : g.say(pn);
+  const back = list.length > 1 ? gestureOf('hug') : g;
   buzz([40, 60, 40]);
   notify(txt, 'Ouvre l\'appli pour le recevoir 💗');
   const o = overlay(`<div class="welcome hug-box" style="max-width:420px"><div class="hug-anim">${em}</div><p class="big" style="font-size:clamp(30px,8vw,46px)">${esc(txt)}</p>
-    <button type="button" class="btn" data-back style="margin-top:10px">Renvoyer un câlin</button><button type="button" class="link-btn" data-close>Fermer</button></div>`,
+    <button type="button" class="btn" data-back style="margin-top:10px">Renvoyer ${back.e} ${esc(gestureLabel(back, S.me.name))}</button><button type="button" class="link-btn" data-close>Fermer</button></div>`,
     { onClose: () => { hugOpen = false; done(); } });
   heartRain(30);
   $('[data-close]', o.el).addEventListener('click', () => o.close());
   $('[data-back]', o.el).addEventListener('click', async (e) => {
-    burstFrom(e.currentTarget, { emojis: ['🤗', '💗'], n: 14 });
-    try { const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: 'hug' } }); toast(r.queued ? 'Câlin envoyé dès le retour du réseau' : `Câlin renvoyé à ${pn} 💞`); } catch (ex) { toastError(normalize(ex)); }
+    burstFrom(e.currentTarget, { emojis: [back.e, '💗'], n: 14 });
+    try { const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: back.k } }); toast(r.queued ? `${back.e} partira dès le retour du réseau` : `${back.e} renvoyé à ${pn} 💞`); } catch (ex) { toastError(normalize(ex)); }
     o.close();
   });
   q(sb.rpc('mark_hugs_seen')).then(() => { if (S.home) S.home.unseen_hugs = []; }).catch(() => {});
