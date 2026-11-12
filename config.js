@@ -4,7 +4,7 @@
 window.LOVE_CONFIG = {
   SUPABASE_URL: 'https://wezcckqftoervxdshwqg.supabase.co',
   SUPABASE_KEY: 'sb_publishable_VUSRY7OvAgqsWKFlwQoycQ_BuPnKT7J',
-  VERSION: '2.1.0',
+  VERSION: '2.2.0',
   // Les deux comptes (le PIN est le mot de passe)
   PEOPLE: {
     Jaafar: { email: 'jaafar.compleo@example.com', city: 'Casablanca', tz: 'Africa/Casablanca' },

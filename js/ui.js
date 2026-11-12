@@ -19,15 +19,26 @@ export const ICON = {
 
 /* ---------------- Moods ---------------- */
 export const MOODS = [
-  { k: 'radieux',  e: '🤩', m: 'Radieux',       f: 'Radieuse',      c: '#f5c46a' },
-  { k: 'amoureux', e: '🥰', m: 'Amoureux',      f: 'Amoureuse',     c: '#ff8fab' },
-  { k: 'heureux',  e: '😊', m: 'Heureux',       f: 'Heureuse',      c: '#ffd36e' },
-  { k: 'calme',    e: '😌', m: 'Serein',        f: 'Sereine',       c: '#8ee3cf' },
-  { k: 'manque',   e: '🥺', m: 'Tu me manques', f: 'Tu me manques', c: '#c9a7ff' },
-  { k: 'fatigue',  e: '😴', m: 'Fatigué',       f: 'Fatiguée',      c: '#9aa7d6' },
-  { k: 'stresse',  e: '😣', m: 'Stressé',       f: 'Stressée',      c: '#ff9f6e' },
-  { k: 'triste',   e: '😢', m: 'Triste',        f: 'Triste',        c: '#7fb2ff' },
-  { k: 'grognon',  e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' }
+  { k: 'radieux',     e: '🤩', m: 'Radieux',       f: 'Radieuse',      c: '#f5c46a' },
+  { k: 'amoureux',    e: '🥰', m: 'Amoureux',      f: 'Amoureuse',     c: '#ff8fab' },
+  { k: 'calin',       e: '🤗', m: 'Câlin',         f: 'Câline',        c: '#ffb3c7' },
+  { k: 'heureux',     e: '😊', m: 'Heureux',       f: 'Heureuse',      c: '#ffd36e' },
+  { k: 'festif',      e: '🥳', m: 'Festif',        f: 'Festive',       c: '#ff9ed8' },
+  { k: 'coquin',      e: '😏', m: 'Coquin',        f: 'Coquine',       c: '#e86a92' },
+  { k: 'taquin',      e: '😜', m: 'Taquin',        f: 'Taquine',       c: '#ffc15e' },
+  { k: 'motive',      e: '💪', m: 'Motivé',        f: 'Motivée',       c: '#7ed98f' },
+  { k: 'fier',        e: '😎', m: 'Fier',          f: 'Fière',         c: '#6ec6ff' },
+  { k: 'calme',       e: '😌', m: 'Serein',        f: 'Sereine',       c: '#8ee3cf' },
+  { k: 'reveur',      e: '💭', m: 'Rêveur',        f: 'Rêveuse',       c: '#b6c3ff' },
+  { k: 'nostalgique', e: '🥲', m: 'Nostalgique',   f: 'Nostalgique',   c: '#d7b0e8' },
+  { k: 'manque',      e: '🥺', m: 'Tu me manques', f: 'Tu me manques', c: '#c9a7ff' },
+  { k: 'bof',         e: '😐', m: 'Bof',           f: 'Bof',           c: '#b8b8c8' },
+  { k: 'fatigue',     e: '😴', m: 'Fatigué',       f: 'Fatiguée',      c: '#9aa7d6' },
+  { k: 'deborde',     e: '🤯', m: 'Débordé',       f: 'Débordée',      c: '#ffab5e' },
+  { k: 'stresse',     e: '😣', m: 'Stressé',       f: 'Stressée',      c: '#ff9f6e' },
+  { k: 'malade',      e: '🤒', m: 'Patraque',      f: 'Patraque',      c: '#9fd3a8' },
+  { k: 'triste',      e: '😢', m: 'Triste',        f: 'Triste',        c: '#7fb2ff' },
+  { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' }
 ];
 export const moodOf = (k) => MOODS.find((m) => m.k === k) || null;
 export const moodLabel = (k, name) => { const m = moodOf(k); return m ? (name === 'Audrey' ? m.f : m.m) : ''; };

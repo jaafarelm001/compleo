@@ -121,12 +121,8 @@ function homePage(el) {
     const d = homeData();
     greet();
     const s = d.settings || {};
-    // sous-titre : jours ensemble
-    const sub = $('#h-sub', el);
-    if (s.together_since) {
-      const n = daysBetween(s.together_since, myToday());
-      sub.textContent = n >= 0 ? `${n.toLocaleString('fr-FR')} jours que l'on s'aime, malgré les kilomètres.` : 'Notre histoire commence bientôt.';
-    } else sub.textContent = 'Le même ciel au-dessus de nous deux.';
+    // sous-titre
+    $('#h-sub', el).textContent = 'Le même ciel au-dessus de nous deux.';
     // moods sur la carte des villes
     for (const n of ['Jaafar', 'Audrey']) {
       const m = n === me.name ? d.moods && d.moods.me : d.moods && d.moods.partner;
@@ -192,8 +188,7 @@ function homePage(el) {
     }</span></span>${ICON.chev}`;
     // stats
     const st = d.stats || {};
-    const days = s.together_since ? Math.max(0, daysBetween(s.together_since, myToday())) : '—';
-    const items = [[days, 'jours ensemble'], [c.unlocked || 0, 'compliments'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'câlins envoyés'], [st.memories || 0, 'souvenirs']];
+    const items = [[c.unlocked || 0, 'compliments'], [st.answers || 0, 'questions à deux'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'câlins envoyés'], [st.memories || 0, 'souvenirs']];
     $('#h-stats', el).innerHTML = items.map(([v, l]) => `<div class="stat"><b>${typeof v === 'number' ? v.toLocaleString('fr-FR') : v}</b><span>${l}</span></div>`).join('');
   }
 
