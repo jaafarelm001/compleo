@@ -324,7 +324,7 @@ async function loadHome() {
       S.offline = false; renderNet();
       renderPresence(); setBadges();
       if (isJaafar() && prevUnseen != null && d.compliments.unseen > prevUnseen && S.route !== 'compliments') {
-        toast('Un nouveau compliment d\'Audrey t\'attend 💌', { action: 'Voir', onAction: () => hooks.navigate('compliments') });
+        toast('Un nouveau compliment d\'Audrey t\'attend 💌', { action: 'Voir', onAction: () => { location.hash = '#/compliments?tab=recus'; } });
         notify('Nouveau compliment 💌', 'Audrey a débloqué un compliment pour toi.');
       }
       if (Array.isArray(d.unseen_hugs) && d.unseen_hugs.length) showHug(d.unseen_hugs);
@@ -353,7 +353,7 @@ async function handleAuthLost() {
 /* =====================================================================
    Temps réel + présence
    ===================================================================== */
-const TABLES = ['moods', 'compliments', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles'];
+const TABLES = ['moods', 'compliments', 'jaafar_compliments', 'compliment_rules', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles'];
 function startRealtime() {
   if (rtChannel || !S.me) return;
   try {
@@ -405,7 +405,16 @@ function onDbChange(table, p) {
   if (table === 'memories' && ins && fromPartner) toast(`${pn} a ajouté un souvenir 📸`);
 
   scheduleHome();
-  const map = { moods: ['mood', 'accueil'], compliments: ['compliments'], answers: ['question'], notes: ['mots'], music: ['musique'], letters: ['capsules'], memories: ['souvenirs'], couple_settings: ['reglages', 'accueil'] };
+  if (table === 'jaafar_compliments' && ins && !isJaafar()) {
+    toast('Jaafar t\'a écrit un compliment 💌', S.route !== 'compliments' ? { action: 'Lire', onAction: () => { location.hash = '#/compliments?tab=de'; } } : {});
+    notify('Un compliment de Jaafar 💌', 'Ouvre l\'appli pour le découvrir.');
+  }
+  if (table === 'compliment_rules' && isJaafar() && p.eventType === 'UPDATE') {
+    const m = row.mode, per = { day: 'jour', week: 'semaine', month: 'mois' }[row.period] || 'jour';
+    const txt = m === 'off' ? 'Audrey a mis tes compliments en pause ⏸️' : m === 'goal' ? `Nouvel objectif d'Audrey : ${row.count} compliment${row.count > 1 ? 's' : ''} par ${per} 🎯` : `Nouvelle règle d'Audrey : ${row.count} compliment${row.count > 1 ? 's' : ''} max par ${per}`;
+    toast(txt); notify('Règle des compliments', txt);
+  }
+  const map = { moods: ['mood', 'accueil'], compliments: ['compliments'], jaafar_compliments: ['compliments', 'accueil'], compliment_rules: ['compliments', 'accueil'], answers: ['question'], notes: ['mots'], music: ['musique'], letters: ['capsules'], memories: ['souvenirs'], couple_settings: ['reglages', 'accueil'] };
   if ((map[table] || []).includes(S.route)) { clearTimeout(pageTimer); pageTimer = setTimeout(refreshPage, 400); }
 }
 
@@ -459,7 +468,7 @@ document.addEventListener('visibilitychange', () => {
 
 function setBadges() {
   const d = S.home || {};
-  const c = (d.compliments && isJaafar() && d.compliments.unseen) || 0;
+  const c = isJaafar() ? ((d.compliments && d.compliments.unseen) || 0) : ((d.jc && d.jc.unseen) || 0);
   const qd = d.question || {};
   const qBadge = qd.text && !qd.me_answered ? (qd.partner_answered ? '1' : '•') : '';
   const set = (r, v) => { const b = $(`[data-badge="${r}"]`); if (b) { b.hidden = !v; b.textContent = v; b.setAttribute('aria-label', v ? 'nouveau' : ''); } };

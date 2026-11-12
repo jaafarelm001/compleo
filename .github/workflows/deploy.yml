@@ -55,7 +55,7 @@ jobs:
             echo "Le site n'est pas encore à jour, nouvel essai dans 15 s…"; sleep 15
           done
           curl -fsS "$url" | grep -q "Jaafar"
-          curl -fsS -o /dev/null "${url}js/app.js?v=2.0.0"
+          curl -fsS -o /dev/null "${url}js/app.js?v=2.1.0"
           curl -fsS -o /dev/null "${url}vendor/supabase.js"
           curl -s "${url}mood" | grep -q "compleo-base"
           echo "Site OK : $url"

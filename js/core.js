@@ -94,6 +94,8 @@ export function normalize(err) {
   if (!isOnline() || /fetch|network|timeout|abort|load failed|ECONN|socket/i.test(msg) || err?.name === 'TimeoutError') {
     return new AppError('network', 'Pas de connexion pour le moment.', err);
   }
+  if (/quota_atteint/.test(msg)) return new AppError('quota', 'Limite atteinte pour cette période : c\'est la règle fixée par Audrey.', err);
+  if (/compliments_en_pause/.test(msg)) return new AppError('paused', 'Audrey a mis les compliments en pause pour le moment.', err);
   if (code === '23505') return new AppError('duplicate', 'Déjà enregistré.', err);
   if (code === '42501' || /row-level security|permission denied|non_autorise/i.test(msg)) return new AppError('forbidden', "Tu n'as pas le droit de faire ça.", err);
   if (code === '23514' || code === '22001' || /check constraint|violates/i.test(msg)) return new AppError('validation', 'Ce contenu n\'est pas valide (trop long ou vide ?).', err);

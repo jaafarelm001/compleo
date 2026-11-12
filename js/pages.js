@@ -1,7 +1,7 @@
 /* Pages de l'appli. Chaque page : mount(el) → { update(), destroy() }.
  * mount construit la structure (formulaires compris) ; update() ne touche qu'aux zones de données,
  * pour que le temps réel ne fasse jamais perdre un texte en cours de saisie. */
-import { $, $$, esc, uuid, sb, q, load, send, cache, normalize, isOnline, log, PEOPLE } from './core.js';
+import { $, $$, esc, uuid, sb, q, load, send, cache, store, normalize, isOnline, log, PEOPLE } from './core.js';
 import { S, hooks, isJaafar, isAudrey, partnerName, nameOf } from './state.js';
 import {
   ICON, MOODS, moodOf, moodLabel, timeIn, hourIn, dayIn, addDays, dayLabel, fmtDateTime, fmtDate, fmtDay, ago, until, untilText,
@@ -72,7 +72,8 @@ function homePage(el) {
         <div class="mood-pair" id="h-moods"></div>
       </article>
 
-      <a class="card callout span-6" id="h-compl" href="#/compliments" hidden></a>
+      <a class="card callout span-3" id="h-compl" href="#/compliments" hidden></a>
+      <a class="card callout span-3" id="h-jc" hidden></a>
       <a class="card callout span-6" id="h-letters" href="#/capsules" hidden></a>
 
       <article class="card span-3">
@@ -160,6 +161,22 @@ function homePage(el) {
       cEl.hidden = false; cEl.classList.toggle('glow', !c.pending && !c.unlocked);
       cEl.innerHTML = `<span class="em">✍️</span><span class="tx"><b>Les compliments pour Jaafar</b><span>${c.unlocked || 0} débloqué${(c.unlocked || 0) > 1 ? 's' : ''}, ${c.pending || 0} en attente. C'est toi qui décides quand.</span></span>${ICON.chev}`;
     } else cEl.hidden = true;
+    if (isJaafar() && c.unlocked > 0) cEl.href = '#/compliments?tab=recus';
+    if (isAudrey()) cEl.href = '#/compliments?tab=write';
+    // compliments de Jaafar (règle d'Audrey)
+    const jc = d.jc, jEl = $('#h-jc', el);
+    if (jc) {
+      jEl.hidden = false;
+      if (isJaafar()) {
+        jEl.href = '#/compliments?tab=pour';
+        jEl.classList.toggle('glow', canSend(jc) && jc.mode === 'goal' && jc.sent < jc.count);
+        jEl.innerHTML = `<span class="em">${jc.mode === 'off' ? '⏸️' : jc.mode === 'goal' ? '🎯' : '✍️'}</span><span class="tx"><b>Tes compliments pour Audrey</b><span>${esc(jc.mode === 'off' ? ruleSentence(jc, false) : quotaStatus(jc, false))}</span></span>${ICON.chev}`;
+      } else {
+        jEl.href = '#/compliments?tab=de';
+        jEl.classList.toggle('glow', jc.unseen > 0);
+        jEl.innerHTML = `<span class="em">${jc.unseen ? '💌' : '👑'}</span><span class="tx"><b>${jc.unseen ? (jc.unseen === 1 ? 'Jaafar t\'a écrit un compliment' : `Jaafar t'a écrit ${jc.unseen} compliments`) : 'Les compliments de Jaafar'}</b><span>${esc(jc.unseen ? 'Viens les découvrir.' : ruleSentence(jc, true))}</span></span>${ICON.chev}`;
+      }
+    } else jEl.hidden = true;
     // capsules scellées (aperçu)
     const lEl = $('#h-letters', el);
     const letters = cache.get('sealed') || [];
@@ -370,26 +387,170 @@ function ruleText(c, queueIndex) {
 }
 const COMPL_COLS = 'id,content,unlock_rule,unlock_at,rule_moods,position,unlocked_at,seen_by_recipient_at,created_at,updated_at';
 
-function flipCard(c, { flipped, tappable }) {
+function flipCard(c, { flipped, tappable, from = 'Audrey', at = c.unlocked_at }) {
   return `<div class="flip ${flipped ? 'flipped' : ''}" data-id="${esc(c.id)}" ${tappable ? 'role="button" tabindex="0" aria-label="Ouvrir ce compliment"' : ''}>
     <div class="flip-inner">
       <div class="flip-sizer">${esc(c.content)}</div><div class="meta">x</div>
       <div class="flip-face flip-front"><div class="seal">💌</div><b class="serif" style="font-size:19px">Nouveau compliment</b><span class="muted small">Touche pour l'ouvrir</span></div>
       <div class="flip-face flip-back"><q>${esc(c.content)}</q>
-        <div class="meta"><span>De Audrey</span><span>${esc(c.unlocked_at ? ago(c.unlocked_at) : '')}</span></div></div>
+        <div class="meta"><span>De ${esc(from)}</span><span>${esc(at ? ago(at) : '')}</span></div></div>
     </div></div>`;
 }
 
+/** Cartes face cachée qui se retournent une à une, puis « marquées vues ». */
+function flipSequence(box, onDone) {
+  const fresh = $$('.flip:not(.flipped)', box);
+  fresh.forEach((f) => {
+    const open = () => { if (f.classList.contains('flipped')) return; f.classList.add('flipped'); burstFrom(f, { n: 18 }); buzz(15); };
+    f.addEventListener('click', open);
+    f.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+  if (!fresh.length) return false;
+  fresh.forEach((f, i) => setTimeout(() => { if (f.isConnected && !f.classList.contains('flipped')) { f.classList.add('flipped'); burstFrom(f, { n: 16 }); } }, 900 + i * 650));
+  setTimeout(() => heartRain(fresh.length > 2 ? 40 : 24), 700);
+  setTimeout(onDone, 900 + fresh.length * 650 + 400);
+  return true;
+}
+
+/* ---------- Règle d'Audrey pour les compliments de Jaafar ---------- */
+const PERIOD_FR = { day: ['jour', 'aujourd\'hui'], week: ['semaine', 'cette semaine'], month: ['mois', 'ce mois-ci'] };
+const jcState = () => (homeData().jc || null);
+const plural = (n, w, ws) => `${n} ${n > 1 ? (ws || w + 's') : w}`;
+function nextPeriodText(jc) {
+  if (!jc || !jc.period_end) return '';
+  const d = new Date(jc.period_end);
+  if (jc.period === 'day') return 'demain';
+  const o = jc.period === 'week' ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long' };
+  return 'le ' + new Intl.DateTimeFormat('fr-FR', { ...o, timeZone: 'Europe/Paris' }).format(d);
+}
+function ruleSentence(jc, forAudrey) {
+  if (!jc) return '';
+  const per = PERIOD_FR[jc.period] ? PERIOD_FR[jc.period][0] : 'jour';
+  const who = forAudrey ? 'Jaafar peut t\'en envoyer' : 'Tu peux en envoyer';
+  if (jc.mode === 'off') return forAudrey ? 'En pause : Jaafar ne peut pas t\'envoyer de compliment pour le moment.' : 'Audrey a mis les compliments en pause pour le moment.';
+  if (jc.mode === 'goal') return forAudrey ? `Objectif : Jaafar doit t'en envoyer ${jc.count} par ${per} (il peut dépasser).` : `L'objectif d'Audrey : ${jc.count} par ${per}. Tu peux dépasser.`;
+  return `${who} au maximum ${jc.count} par ${per}.`;
+}
+function quotaDots(jc) {
+  if (!jc || jc.mode === 'off') return '';
+  const n = Math.min(jc.count, 30), f = Math.min(jc.sent, n);
+  return `<div class="quota-dots" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<i class="${i < f ? 'f' : ''}"></i>`).join('')}</div>`;
+}
+function quotaStatus(jc, forAudrey) {
+  if (!jc || jc.mode === 'off') return '';
+  const when = PERIOD_FR[jc.period] ? PERIOD_FR[jc.period][1] : '';
+  const sent = `${plural(jc.sent, 'compliment')} ${when}`;
+  if (jc.mode === 'limit') {
+    const left = Math.max(0, jc.count - jc.sent);
+    if (forAudrey) return `${sent}, sur ${jc.count} autorisés.`;
+    return left ? `${sent}. Il t'en reste ${left}.` : `${sent} : limite atteinte. Prochain envoi possible ${nextPeriodText(jc)}.`;
+  }
+  const left = Math.max(0, jc.count - jc.sent);
+  if (forAudrey) return `${sent}, objectif ${jc.count}${left ? '' : ' atteint 🎉'}.`;
+  return left ? `${sent}. Plus que ${left} pour l'objectif d'Audrey.` : `${sent} : objectif atteint 🎉 Les suivants sont du bonus.`;
+}
+const canSend = (jc) => !!jc && (jc.mode === 'goal' || (jc.mode === 'limit' && jc.sent < jc.count));
+async function refreshJc() {
+  try { const st = await q(sb.rpc('jaafar_compliments_state')); if (S.home && st) { S.home.jc = st; cache.set('home', S.home); } return st; }
+  catch { return jcState(); }
+}
+const hashTab = () => { const m = (location.hash || '').match(/[?&]tab=([\w-]+)/); return m ? m[1] : null; };
+
 function complimentsPage(el) {
   if (isAudrey()) return complimentsAdmin(el);
+  let tab = hashTab() || store.get('compl-tab-j') || 'recus';
+  if (!['recus', 'pour'].includes(tab)) tab = 'recus';
   el.innerHTML = `
-    ${pageHead('Les compliments d\'Audrey', 'C\'est Audrey qui les écrit et qui décide quand ils s\'ouvrent. Toi, tu les savoures.')}
-    <article class="card" style="margin-bottom:16px">
-      <div class="big-count"><b id="cp-n">0</b><span id="cp-l">compliments reçus</span></div>
-      <p class="muted" id="cp-pending" style="margin-top:8px"></p>
-    </article>
-    <div class="cards" id="cp-list">${skeleton(2, 170)}</div>`;
+    ${pageHead('Compliments', 'Ceux qu\'Audrey t\'écrit, et ceux que tu lui écris, selon la règle qu\'elle a choisie.')}
+    <div class="seg" role="tablist" style="margin-bottom:16px">
+      <button type="button" role="tab" data-tab="recus" aria-selected="false">Reçus d'Audrey</button>
+      <button type="button" role="tab" data-tab="pour" aria-selected="false">Pour Audrey</button>
+    </div>
+    <section data-panel="recus" hidden>
+      <article class="card" style="margin-bottom:16px">
+        <div class="big-count"><b id="cp-n">0</b><span id="cp-l">compliments reçus</span></div>
+        <p class="muted" id="cp-pending" style="margin-top:8px"></p>
+      </article>
+      <div class="cards" id="cp-list">${skeleton(2, 170)}</div>
+    </section>
+    <section data-panel="pour" hidden>
+      <article class="card" id="jw-rule"></article>
+      <article class="card" style="margin-top:16px">
+        <form class="form" id="jw-form" novalidate>
+          <div><label class="lbl" for="jw-text">Ton compliment pour Audrey</label>
+          <textarea id="jw-text" class="field" maxlength="500" rows="4" placeholder="Ce que tu aimes chez elle…"></textarea></div>
+          <p class="err" id="jw-err" role="alert"></p>
+          <button class="btn" type="submit" id="jw-send">Envoyer à Audrey</button>
+        </form>
+      </article>
+      <article class="card" style="margin-top:16px">
+        <div class="card-head"><h2>Tes compliments envoyés</h2></div>
+        <ul class="feed" id="jw-list">${skeleton(2, 70)}</ul>
+      </article>
+    </section>`;
 
+  const setTab = (t) => {
+    tab = t; store.set('compl-tab-j', t);
+    $$('[data-tab]', el).forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    $$('[data-panel]', el).forEach((p) => { p.hidden = p.dataset.panel !== t; });
+    if (t === 'recus') updateRecus(); else updatePour();
+  };
+  $$('[data-tab]', el).forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+  /* ----- Pour Audrey ----- */
+  const ta = $('#jw-text', el);
+  charCounter(ta, 500);
+  function renderRule() {
+    const jc = jcState();
+    const box = $('#jw-rule', el);
+    if (!jc) { box.innerHTML = skeleton(1, 60); return; }
+    const icon = jc.mode === 'off' ? '⏸️' : jc.mode === 'goal' ? '🎯' : '💌';
+    box.innerHTML = `<div class="callout"><span class="em">${icon}</span><span class="tx"><b>La règle d'Audrey</b><span>${esc(ruleSentence(jc, false))}</span></span></div>
+      ${quotaDots(jc)}<p class="muted small" style="margin-top:10px">${esc(quotaStatus(jc, false))}</p>`;
+    const ok = canSend(jc);
+    ta.disabled = !ok; $('#jw-send', el).disabled = !ok;
+    ta.placeholder = ok ? 'Ce que tu aimes chez elle…' : jc.mode === 'off' ? 'En pause pour le moment' : `Prochain compliment possible ${nextPeriodText(jc)}`;
+  }
+  $('#jw-form', el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = $('#jw-err', el); err.textContent = '';
+    const v = ta.value.trim();
+    if (!v) { err.textContent = 'Écris ton compliment avant de l\'envoyer.'; ta.focus(); return; }
+    if (!isOnline()) { err.textContent = 'Il faut du réseau : la règle d\'Audrey est vérifiée à l\'envoi.'; return; }
+    await busy($('#jw-send', el), async () => {
+      try {
+        await q(sb.from('jaafar_compliments').insert({ id: uuid(), content: v }));
+        ta.value = ''; ta.dispatchEvent(new Event('input'));
+        burstFrom($('#jw-send', el), { n: 18 }); if (LOVE_RE.test(v)) heartRain();
+        toast('Compliment envoyé à Audrey 💌');
+        await refreshJc();
+        const jc = jcState();
+        if (jc && jc.mode === 'goal' && jc.sent === jc.count) { confetti(); toast('Objectif d\'Audrey atteint 🎉'); }
+      } catch (ex) { const n = normalize(ex); err.textContent = n.message; if (n.kind === 'quota' || n.kind === 'paused') await refreshJc(); }
+    });
+    // après la fin de l'envoi : l'état du bouton suit la règle (bloqué si la limite est atteinte)
+    renderRule(); loadSent();
+  });
+  function renderSent(list) {
+    const ul = $('#jw-list', el);
+    if (!list || !list.length) { ul.innerHTML = `<li style="display:block">${emptyState('✍️', 'Ton premier compliment pour Audrey apparaîtra ici.')}</li>`; return; }
+    const now = Date.now();
+    ul.innerHTML = list.map((c) => {
+      const canDel = now - new Date(c.created_at).getTime() < 9.5 * 60e3;
+      return `<li data-id="${esc(c.id)}"><span style="font-size:22px">💌</span><div class="body"><time>${esc(ago(c.created_at))}${c.seen_at ? ' · lu par Audrey' : ' · pas encore lu'}</time><p class="serif it" style="font-size:17px">${esc(c.content)}</p></div>
+        ${canDel ? '<button type="button" class="del" aria-label="Retirer ce compliment (10 minutes pour corriger)">×</button>' : '<span></span>'}</li>`;
+    }).join('');
+    $$('.del', ul).forEach((b) => b.addEventListener('click', async () => {
+      const id = b.closest('li').dataset.id;
+      if (!(await confirmDialog({ title: 'Retirer ce compliment ?', text: 'Possible pendant 10 minutes après l\'envoi, le temps de corriger.', ok: 'Retirer', danger: true }))) return;
+      try { await q(sb.from('jaafar_compliments').delete().eq('id', id)); toast('Compliment retiré'); await refreshJc(); renderRule(); loadSent(); }
+      catch (ex) { toastError(normalize(ex)); }
+    }));
+  }
+  const loadSent = () => region($('#jw-list', el), 'jc-sent', () => q(sb.from('jaafar_compliments').select('id,content,created_at,seen_at').order('created_at', { ascending: false }).limit(100)), renderSent);
+  function updatePour() { renderRule(); loadSent(); refreshJc().then(() => { if (el.isConnected) renderRule(); }); }
+
+  /* ----- Reçus d'Audrey ----- */
   let flipping = false;
   function render(list) {
     const c = homeData().compliments || {};
@@ -399,48 +560,69 @@ function complimentsPage(el) {
     const box = $('#cp-list', el);
     if (!list.length) { box.innerHTML = `<div class="card soft" style="grid-column:1/-1">${emptyState('🕊️', 'Audrey prépare quelque chose… Ton premier compliment apparaîtra ici.')}</div>`; return; }
     box.innerHTML = list.map((x) => flipCard(x, { flipped: !!x.seen_by_recipient_at || flipping === 'done', tappable: !x.seen_by_recipient_at })).join('');
-    const fresh = $$('.flip:not(.flipped)', box);
-    fresh.forEach((f) => {
-      const open = () => { if (f.classList.contains('flipped')) return; f.classList.add('flipped'); burstFrom(f, { n: 18 }); buzz(15); };
-      f.addEventListener('click', open);
-      f.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    if (flipping) return;
+    flipping = flipSequence(box, async () => {
+      flipping = 'done';
+      try {
+        await q(sb.rpc('mark_compliments_seen'));
+        const now = new Date().toISOString();
+        const l = (cache.get('compliments') || []).map((x) => ({ ...x, seen_by_recipient_at: x.seen_by_recipient_at || now }));
+        cache.set('compliments', l);
+        if (S.home && S.home.compliments) S.home.compliments.unseen = 0;
+        hooks.setBadges();
+      } catch {}
+      flipping = false;
     });
-    if (fresh.length && !flipping) {
-      flipping = true;
-      // les nouveaux se retournent un par un
-      fresh.forEach((f, i) => setTimeout(() => { if (f.isConnected && !f.classList.contains('flipped')) { f.classList.add('flipped'); burstFrom(f, { n: 16 }); } }, 900 + i * 650));
-      setTimeout(async () => {
-        flipping = 'done';
-        try {
-          await q(sb.rpc('mark_compliments_seen'));
-          const now = new Date().toISOString();
-          const l = (cache.get('compliments') || []).map((x) => ({ ...x, seen_by_recipient_at: x.seen_by_recipient_at || now }));
-          cache.set('compliments', l);
-          if (S.home && S.home.compliments) S.home.compliments.unseen = 0;
-          hooks.setBadges();
-        } catch {}
-        flipping = false;
-      }, 900 + fresh.length * 650 + 400);
-      if (fresh.length >= 1) setTimeout(() => heartRain(fresh.length > 2 ? 40 : 24), 700);
-    }
   }
-  const update = () => region($('#cp-list', el), 'compliments',
+  const updateRecus = () => region($('#cp-list', el), 'compliments',
     () => q(sb.from('compliments').select(COMPL_COLS).not('unlocked_at', 'is', null).order('unlocked_at', { ascending: false })),
     render);
-  update();
-  return { update };
+  setTab(tab);
+  return { update: () => (tab === 'recus' ? updateRecus() : updatePour()) };
 }
 
 function complimentsAdmin(el) {
-  let tab = 'write', editing = null, filter = 'all', all = [];
+  const unseenJc = (jcState() && jcState().unseen) || 0;
+  let tab = hashTab() || (unseenJc ? 'de' : store.get('compl-tab-a')) || 'de';
+  if (!['de', 'write', 'manage', 'preview'].includes(tab)) tab = 'de';
+  let editing = null, filter = 'all', all = [];
   el.innerHTML = `
-    ${pageHead('Tes compliments pour Jaafar', 'Toi seule les écris, les modifies et choisis quand ils s\'ouvrent. Jaafar ne voit que ceux qui sont débloqués.')}
+    ${pageHead('Compliments', 'Ceux de Jaafar arrivent selon ta règle. Les tiens, toi seule les écris et décides quand ils s\'ouvrent.')}
     <div class="seg" role="tablist" style="margin-bottom:16px">
-      <button type="button" role="tab" data-tab="write" aria-selected="true">Écrire</button>
+      <button type="button" role="tab" data-tab="de" aria-selected="false">De Jaafar <span id="ad-jc"></span></button>
+      <button type="button" role="tab" data-tab="write" aria-selected="false">Écrire</button>
       <button type="button" role="tab" data-tab="manage" aria-selected="false">Gérer <span id="ad-count"></span></button>
-      <button type="button" role="tab" data-tab="preview" aria-selected="false">Ce que voit Jaafar</button>
+      <button type="button" role="tab" data-tab="preview" aria-selected="false">Aperçu</button>
     </div>
-    <section data-panel="write">
+    <section data-panel="de" hidden>
+      <article class="card">
+        <form class="form" id="jr-form" novalidate>
+          <h2>Ta règle pour Jaafar</h2>
+          <div class="seg" role="radiogroup" aria-label="Fonctionnement" id="jr-mode">
+            <button type="button" role="radio" data-mode="limit" aria-selected="false">Limite</button>
+            <button type="button" role="radio" data-mode="goal" aria-selected="false">Objectif</button>
+            <button type="button" role="radio" data-mode="off" aria-selected="false">Pause</button>
+          </div>
+          <div class="jr-fields" id="jr-fields">
+            <label class="lbl" for="jr-count" id="jr-count-l">Nombre de compliments</label>
+            <div class="row nowrap">
+              <button type="button" class="btn ghost small step" data-step="-1" aria-label="Un de moins">−</button>
+              <input id="jr-count" class="field num" type="number" inputmode="numeric" min="1" max="50" value="3">
+              <button type="button" class="btn ghost small step" data-step="1" aria-label="Un de plus">+</button>
+              <select id="jr-period" class="field" aria-label="Période">
+                <option value="day">par jour</option><option value="week">par semaine</option><option value="month">par mois</option>
+              </select>
+            </div>
+          </div>
+          <p class="muted small" id="jr-sentence"></p>
+          <p class="err" id="jr-err" role="alert"></p>
+          <button class="btn" type="submit" id="jr-save">Enregistrer ma règle</button>
+        </form>
+        <div id="jr-status" style="margin-top:16px"></div>
+      </article>
+      <div class="cards" id="jr-list" style="margin-top:16px">${skeleton(2, 150)}</div>
+    </section>
+    <section data-panel="write" hidden>
       <article class="card">
         <form class="form" id="cf" novalidate>
           <h2 id="cf-title">Nouveau compliment</h2>
@@ -484,11 +666,77 @@ function complimentsAdmin(el) {
     </section>`;
 
   const setTab = (t) => {
-    tab = t;
+    tab = t; store.set('compl-tab-a', t);
     $$('[data-tab]', el).forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
     $$('[data-panel]', el).forEach((p) => { p.hidden = p.dataset.panel !== t; });
+    if (t === 'de') updateDe();
   };
   $$('[data-tab]', el).forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+  /* ----- De Jaafar : règle + compliments reçus ----- */
+  let mode = 'limit', ruleDirty = false;
+  const countIn = $('#jr-count', el), periodIn = $('#jr-period', el);
+  const clampCount = () => { const n = Math.min(50, Math.max(1, parseInt(countIn.value, 10) || 1)); countIn.value = n; return n; };
+  const draft = () => ({ mode, count: clampCount(), period: periodIn.value, sent: (jcState() || {}).sent || 0 });
+  function paintRuleForm() {
+    $$('#jr-mode [data-mode]', el).forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === mode)));
+    $('#jr-fields', el).hidden = mode === 'off';
+    $('#jr-count-l', el).textContent = mode === 'goal' ? 'Objectif de compliments' : 'Nombre maximum de compliments';
+    $('#jr-sentence', el).textContent = ruleSentence(draft(), true);
+  }
+  function fillRule() {
+    const jc = jcState(); if (!jc || ruleDirty) return;
+    mode = jc.mode; countIn.value = jc.count; periodIn.value = jc.period;
+    paintRuleForm();
+  }
+  $$('#jr-mode [data-mode]', el).forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; ruleDirty = true; paintRuleForm(); buzz(8); }));
+  $$('#jr-form [data-step]', el).forEach((b) => b.addEventListener('click', () => { countIn.value = (parseInt(countIn.value, 10) || 1) + Number(b.dataset.step); clampCount(); ruleDirty = true; paintRuleForm(); }));
+  countIn.addEventListener('input', () => { ruleDirty = true; $('#jr-sentence', el).textContent = ruleSentence({ ...draft(), count: Math.min(50, Math.max(1, parseInt(countIn.value, 10) || 1)) }, true); });
+  countIn.addEventListener('change', () => { clampCount(); paintRuleForm(); });
+  periodIn.addEventListener('change', () => { ruleDirty = true; paintRuleForm(); });
+  $('#jr-form', el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = $('#jr-err', el); err.textContent = '';
+    if (!isOnline()) { err.textContent = 'Il faut du réseau pour enregistrer ta règle.'; return; }
+    const d = draft();
+    await busy($('#jr-save', el), async () => {
+      try {
+        await q(sb.from('compliment_rules').update({ mode: d.mode, count: d.count, period: d.period }).eq('id', 1));
+        ruleDirty = false;
+        await refreshJc();
+        toast(d.mode === 'off' ? 'Compliments de Jaafar en pause ⏸️' : 'Ta règle est enregistrée 👑');
+        fillRule(); renderJrStatus();
+      } catch (ex) { err.textContent = normalize(ex).message; }
+    });
+  });
+  function renderJrStatus() {
+    const jc = jcState();
+    $('#ad-jc', el).textContent = jc && jc.unseen ? `(${jc.unseen})` : '';
+    $('#jr-status', el).innerHTML = jc && jc.mode !== 'off' ? `${quotaDots(jc)}<p class="muted small" style="margin-top:10px">${esc(quotaStatus(jc, true))}</p>` : '';
+  }
+  let jrFlipping = false;
+  function renderJr(list) {
+    const box = $('#jr-list', el);
+    if (!list || !list.length) { box.innerHTML = `<div class="card soft" style="grid-column:1/-1">${emptyState('💌', 'Les compliments de Jaafar apparaîtront ici.')}</div>`; return; }
+    box.innerHTML = list.map((c) => flipCard(c, { flipped: !!c.seen_at || jrFlipping === 'done', tappable: !c.seen_at, from: 'Jaafar', at: c.created_at })).join('');
+    if (jrFlipping) return;
+    jrFlipping = flipSequence(box, async () => {
+      jrFlipping = 'done';
+      try {
+        await q(sb.rpc('mark_jaafar_compliments_seen'));
+        const now = new Date().toISOString();
+        cache.set('jc-recus', (cache.get('jc-recus') || []).map((x) => ({ ...x, seen_at: x.seen_at || now })));
+        if (S.home && S.home.jc) S.home.jc.unseen = 0;
+        hooks.setBadges(); renderJrStatus();
+      } catch {}
+      jrFlipping = false;
+    });
+  }
+  function updateDe() {
+    fillRule(); renderJrStatus();
+    region($('#jr-list', el), 'jc-recus', () => q(sb.from('jaafar_compliments').select('id,content,created_at,seen_at').order('created_at', { ascending: false }).limit(150)), renderJr);
+    refreshJc().then(() => { if (el.isConnected) { fillRule(); renderJrStatus(); } });
+  }
 
   const content = $('#cf-content', el), rule = $('#cf-rule', el), dateIn = $('#cf-date', el);
   charCounter(content, 500);
@@ -616,7 +864,8 @@ function complimentsAdmin(el) {
     () => q(sb.from('compliments').select(COMPL_COLS).order('created_at', { ascending: false })),
     (list) => { all = list || []; renderManage(); renderPreview(); });
   refresh();
-  return { update: refresh };
+  setTab(tab);
+  return { update: () => { refresh(); if (tab === 'de') updateDe(); } };
 }
 
 /* =====================================================================
