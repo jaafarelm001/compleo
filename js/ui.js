@@ -33,12 +33,16 @@ export const MOODS = [
   { k: 'nostalgique', e: '🥲', m: 'Nostalgique',   f: 'Nostalgique',   c: '#d7b0e8' },
   { k: 'manque',      e: '🥺', m: 'Tu me manques', f: 'Tu me manques', c: '#c9a7ff' },
   { k: 'bof',         e: '😐', m: 'Bof',           f: 'Bof',           c: '#b8b8c8' },
+  { k: 'canape',      e: '🛋️', m: 'Mode canapé',   f: 'Mode canapé',   c: '#c9a27e' },
+  { k: 'dormir',      e: '🛌', m: 'Mode dormir',   f: 'Mode dormir',   c: '#7c8fd6' },
   { k: 'fatigue',     e: '😴', m: 'Fatigué',       f: 'Fatiguée',      c: '#9aa7d6' },
   { k: 'deborde',     e: '🤯', m: 'Débordé',       f: 'Débordée',      c: '#ffab5e' },
   { k: 'stresse',     e: '😣', m: 'Stressé',       f: 'Stressée',      c: '#ff9f6e' },
   { k: 'malade',      e: '🤒', m: 'Patraque',      f: 'Patraque',      c: '#9fd3a8' },
   { k: 'triste',      e: '😢', m: 'Triste',        f: 'Triste',        c: '#7fb2ff' },
-  { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' }
+  { k: 'boude',       e: '😒', m: 'Je boude',      f: 'Je boude',      c: '#a99bc4' },
+  { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' },
+  { k: 'furieux',     e: '😡', m: 'Très énervé',   f: 'Très énervée',  c: '#ff4d5e' }
 ];
 export const moodOf = (k) => MOODS.find((m) => m.k === k) || null;
 export const moodLabel = (k, name) => { const m = moodOf(k); return m ? (name === 'Audrey' ? m.f : m.m) : ''; };
