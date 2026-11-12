@@ -353,7 +353,7 @@ async function handleAuthLost() {
 /* =====================================================================
    Temps réel + présence
    ===================================================================== */
-const TABLES = ['moods', 'compliments', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles'];
+const TABLES = ['moods', 'compliments', 'compliments_audrey', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles'];
 function startRealtime() {
   if (rtChannel || !S.me) return;
   try {
@@ -399,13 +399,17 @@ function onDbChange(table, p) {
     toast(`Nouveau mot doux de ${pn} 💌`, S.route !== 'mots' ? { action: 'Lire', onAction: () => hooks.navigate('mots') } : {});
     notify(`Mot doux de ${pn}`, String(row.content || '').slice(0, 120));
   }
+  if (table === 'compliments_audrey' && ins && fromPartner) {
+    toast('Jaafar t\'a écrit un compliment 💌', S.route !== 'compliments' ? { action: 'Lire', onAction: () => { store.set('compl-tab', 'recus'); hooks.navigate('compliments'); } } : {});
+    notify('Un compliment de Jaafar 💌', 'Ouvre l\'appli pour le lire.');
+  }
   if (table === 'answers' && fromPartner) { toast(`${pn} a répondu à la question du jour`); notify('Question du jour', `${pn} a répondu.`); }
   if (table === 'letters' && ins && fromPartner) { toast(`${pn} t'a préparé une capsule ✉️`); notify('Capsule temporelle', `${pn} a scellé une lettre pour toi.`); }
   if (table === 'music' && ins && fromPartner) toast(`${pn} a partagé un morceau 🎶`);
   if (table === 'memories' && ins && fromPartner) toast(`${pn} a ajouté un souvenir 📸`);
 
   scheduleHome();
-  const map = { moods: ['mood', 'accueil'], compliments: ['compliments'], answers: ['question'], notes: ['mots'], music: ['musique'], letters: ['capsules'], memories: ['souvenirs'], couple_settings: ['reglages', 'accueil'] };
+  const map = { moods: ['mood', 'accueil'], compliments: ['compliments'], compliments_audrey: ['compliments'], answers: ['question'], notes: ['mots'], music: ['musique'], letters: ['capsules'], memories: ['souvenirs'], couple_settings: ['reglages', 'accueil', 'compliments'] };
   if ((map[table] || []).includes(S.route)) { clearTimeout(pageTimer); pageTimer = setTimeout(refreshPage, 400); }
 }
 
@@ -459,7 +463,7 @@ document.addEventListener('visibilitychange', () => {
 
 function setBadges() {
   const d = S.home || {};
-  const c = (d.compliments && isJaafar() && d.compliments.unseen) || 0;
+  const c = isJaafar() ? ((d.compliments && d.compliments.unseen) || 0) : ((d.jcompl && d.jcompl.unseen) || 0);
   const qd = d.question || {};
   const qBadge = qd.text && !qd.me_answered ? (qd.partner_answered ? '1' : '•') : '';
   const set = (r, v) => { const b = $(`[data-badge="${r}"]`); if (b) { b.hidden = !v; b.textContent = v; b.setAttribute('aria-label', v ? 'nouveau' : ''); } };

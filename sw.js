@@ -1,8 +1,8 @@
 /* Service worker : l'appli s'ouvre même hors-ligne. Les données Supabase ne sont jamais mises en cache ici. */
-const VERSION = 'compleo-2.0.0';
+const VERSION = 'compleo-2.1.0';
 const SHELL = [
-  './', './index.html', './404.html', './styles.css?v=2.0.0', './config.js?v=2.0.0', './vendor/supabase.js',
-  './js/app.js?v=2.0.0', './js/core.js', './js/fx.js', './js/ui.js', './js/state.js', './js/pages.js',
+  './', './index.html', './404.html', './styles.css?v=2.1.0', './config.js?v=2.1.0', './vendor/supabase.js',
+  './js/app.js?v=2.1.0', './js/core.js', './js/fx.js', './js/ui.js', './js/state.js', './js/pages.js',
   './fonts/fraunces-latin-full-normal.woff2', './fonts/fraunces-latin-full-italic.woff2', './fonts/figtree-latin-wght-normal.woff2',
   './icon.svg', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest'
 ];
