@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -22,14 +22,40 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Vérifier les fichiers essentiels
+        run: |
+          for f in index.html 404.html .nojekyll config.js styles.css sw.js manifest.webmanifest \
+                   js/app.js js/core.js js/pages.js js/ui.js js/fx.js js/state.js vendor/supabase.js; do
+            test -f "$f" || { echo "::error::Fichier manquant : $f"; exit 1; }
+          done
+          node --check sw.js
+          for f in js/*.js; do node --check "$f"; done
+
+      # Le site publié = la racine du dépôt, sans les fichiers techniques
       - name: Préparer le site
         run: |
-          mkdir -p _site
-          cp index.html app.js styles.css config.js manifest.webmanifest icon.svg icon-512.png apple-touch-icon.png _site/
+          mkdir _site
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'supabase' --exclude 'README.md' --exclude '_site' ./ _site/
           touch _site/.nojekyll
+          ls -la _site
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Vérifier le site en ligne (accueil, script, lien profond)
+        run: |
+          url="${{ steps.deployment.outputs.page_url }}"
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$url" | grep -q "Jaafar"; then break; fi
+            echo "Le site n'est pas encore à jour, nouvel essai dans 15 s…"; sleep 15
+          done
+          curl -fsS "$url" | grep -q "Jaafar"
+          curl -fsS -o /dev/null "${url}js/app.js?v=2.0.0"
+          curl -fsS -o /dev/null "${url}vendor/supabase.js"
+          curl -s "${url}mood" | grep -q "compleo-base"
+          echo "Site OK : $url"

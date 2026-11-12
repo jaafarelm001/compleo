@@ -1,15 +1,18 @@
 {
   "name": "Jaafar ♥ Audrey",
   "short_name": "J ♥ A",
-  "description": "Notre petit compteur d'amour : compliments et clashs",
+  "description": "Notre petit monde à deux, entre Casablanca et la France",
   "lang": "fr",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffe1ea",
-  "theme_color": "#e8467c",
+  "orientation": "any",
+  "background_color": "#1a1442",
+  "theme_color": "#1a1442",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

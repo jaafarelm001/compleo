@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Jaafar ♥ Audrey</title>
+<script>
+  // GitHub Pages ne connaît pas les routes de l'appli (/mood, /compliments…).
+  // On renvoie vers index.html avec la route dans le #, sans rien perdre.
+  (function () {
+    var l = window.location;
+    var segs = l.pathname.split('/').filter(Boolean);
+    var stored = null;
+    try { stored = localStorage.getItem('compleo-base'); } catch (e) {}
+    var base;
+    if (stored && l.pathname.indexOf(stored) === 0) base = stored;                       // base mémorisée par l'appli
+    else if (/\.github\.io$/.test(l.hostname) && segs.length > 0) base = '/' + segs[0] + '/';  // GitHub Pages projet
+    else base = '/';
+    var rest = l.pathname.slice(base.length).replace(/\/+$/, '').replace(/(index)?\.html$/, '');
+    var hash = l.hash && l.hash.length > 1 ? l.hash : (rest ? '#/' + rest : '');
+    l.replace(l.protocol + '//' + l.host + base + l.search + hash);
+  })();
+</script>
+</head>
+<body style="background:#1a1442;color:#f3eeff;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0">
+  <p><a href="./" style="color:#ff8fab">Ouvrir notre appli</a></p>
+</body>
+</html>

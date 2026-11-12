@@ -1,0 +1,9 @@
+-- Index des clés étrangères (recommandation du linter Supabase)
+create index if not exists answers_question_idx       on public.answers (question_id);
+create index if not exists compliments_created_by_idx on public.compliments (created_by);
+create index if not exists settings_updated_by_idx    on public.couple_settings (updated_by);
+create index if not exists hugs_from_idx              on public.hugs (from_id);
+create index if not exists letters_author_idx         on public.letters (author_id);
+create index if not exists memories_author_idx        on public.memories (author_id);
+create index if not exists music_author_idx           on public.music (author_id);
+create index if not exists notes_author_idx           on public.notes (author_id);
