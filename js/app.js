@@ -328,6 +328,7 @@ async function loadHome() {
         notify('Nouveau compliment 💌', 'Audrey a débloqué un compliment pour toi.');
       }
       if (Array.isArray(d.unseen_hugs) && d.unseen_hugs.length) showHug(d.unseen_hugs);
+      announceQuestion(d.question);
       if (current && ['accueil', 'nous', 'question', 'reglages', 'compliments'].includes(current.name)) refreshPage();
       return d;
     } catch (e) {
@@ -554,6 +555,26 @@ const LINES = {
     'Encore un jour de moins avant les retrouvailles.'
   ]
 };
+/* Nouvelle question du jour : annoncée une seule fois par jour, à l'entrée dans l'appli
+   (après l'animation de bienvenue). Rien si on y a déjà répondu. */
+function announceQuestion(qd) {
+  if (!S.me || !qd || !qd.day || !qd.text) return;
+  const key = `q-announced:${S.me.id}`;
+  if (store.get(key) === qd.day) return;
+  store.set(key, qd.day);
+  if (qd.me_answered) return;
+  const pn = partnerName();
+  enqueue((done) => {
+    if (!S.me) return done();
+    if (S.route !== 'question') {
+      const lead = qd.partner_answered ? `${pn} a déjà répondu à la question du jour` : 'Nouvelle question du jour';
+      toast(`💬 ${lead} : « ${qd.text} »`, { action: 'Répondre', onAction: () => hooks.navigate('question'), duration: 12000 });
+      buzz(15);
+    }
+    done();
+  });
+}
+
 function showWelcome(manual) {
   if (!S.me) return;
   store.set('welcome-day', dayIn(S.me.tz));

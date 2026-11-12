@@ -888,7 +888,7 @@ function questionPage(el) {
     </article>`;
   const ta = $('#qa', el);
   charCounter(ta, 1000);
-  let filled = false, lastBoth = null;
+  let filled = false, lastBoth = null, shownDay = null;
 
   $('#qf', el).addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -913,6 +913,11 @@ function questionPage(el) {
 
   function renderQ() {
     const qd = homeData().question || {};
+    if (qd.day && shownDay && qd.day !== shownDay) {   // minuit est passé : nouvelle question
+      filled = false; lastBoth = null; ta.value = ''; ta.dispatchEvent(new Event('input')); $('#qerr', el).textContent = '';
+      loadHist();
+    }
+    if (qd.day) shownDay = qd.day;
     $('#qq', el).textContent = qd.text || 'La question arrive…';
     if (qd.my_answer && !filled) { ta.value = qd.my_answer; ta.dispatchEvent(new Event('input')); filled = true; }
     $('#qsubmit', el).textContent = qd.me_answered ? 'Modifier ma réponse' : 'Envoyer ma réponse';
