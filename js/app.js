@@ -1,7 +1,7 @@
 /* Jaafar ♥ Audrey — coque de l'appli : connexion, navigation, temps réel, présence, surprises. */
 import { $, $$, esc, sb, hasSdk, q, cache, store, outbox, send, uuid, normalize, isOnline, log, net, PEOPLE, VERSION } from './core.js';
 import { S, hooks, isJaafar, partnerName } from './state.js';
-import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
+import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, gestureTone, TENDRE, CLASHS, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
 import { HEART, startSky, burstFrom, heartRain, confetti, fireworks, buzz, reduced } from './fx.js';
 import { PAGES } from './pages.js';
 
@@ -520,21 +520,61 @@ function renderHug(list, done) {
   const pn = partnerName();
   const last = list[list.length - 1];
   const g = gestureOf(last.kind), em = g.e;
+  const isClash = list.length === 1 && (last.tone === 'clash' || gestureTone(g) === 'clash');
   const txt = list.length > 1 ? `${pn} t'a envoyé ${list.length} attentions pendant ton absence` : g.say(pn);
+  buzz(isClash ? [30, 50, 30, 50, 30] : [40, 60, 40]);
+  notify(txt, isClash ? 'Ouvre l\'appli… il va falloir se réconcilier 😏' : 'Ouvre l\'appli pour le recevoir 💗');
+
   const back = list.length > 1 ? gestureOf('hug') : g;
-  buzz([40, 60, 40]);
-  notify(txt, 'Ouvre l\'appli pour le recevoir 💗');
-  const o = overlay(`<div class="welcome hug-box" style="max-width:420px"><div class="hug-anim">${em}</div><p class="big" style="font-size:clamp(30px,8vw,46px)">${esc(txt)}</p>
-    <button type="button" class="btn" data-back style="margin-top:10px">Renvoyer ${back.e} ${esc(gestureLabel(back, S.me.name))}</button><button type="button" class="link-btn" data-close>Fermer</button></div>`,
+  const btns = isClash
+    ? `<button type="button" class="btn" data-counter="clash" style="margin-top:10px">😈 Contre-geste</button>
+       <button type="button" class="btn ghost" data-counter="tendre">🤍 On fait la paix</button>
+       <button type="button" class="link-btn" data-close>Fermer</button>`
+    : `<button type="button" class="btn" data-back style="margin-top:10px">Renvoyer ${back.e} ${esc(gestureLabel(back, S.me.name))}</button>
+       <button type="button" class="btn ghost" data-counter="tendre">Répondre…</button>
+       <button type="button" class="link-btn" data-close>Fermer</button>`;
+  const o = overlay(`<div class="welcome hug-box ${isClash ? 'clash-box' : ''}" style="max-width:420px"><div class="hug-anim">${em}</div>
+    <p class="big" style="font-size:clamp(30px,8vw,46px)">${esc(txt)}</p>${btns}</div>`,
     { onClose: () => { hugOpen = false; done(); } });
-  heartRain(30);
+  if (isClash) burstFrom($('.hug-anim', o.el), { emojis: ['💢', '😤', em], n: 18 }); else heartRain(30);
+
   $('[data-close]', o.el).addEventListener('click', () => o.close());
-  $('[data-back]', o.el).addEventListener('click', async (e) => {
+  const backBtn = $('[data-back]', o.el);
+  if (backBtn) backBtn.addEventListener('click', async (e) => {
     burstFrom(e.currentTarget, { emojis: [back.e, '💗'], n: 14 });
-    try { const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: back.k } }); toast(r.queued ? `${back.e} partira dès le retour du réseau` : `${back.e} renvoyé à ${pn} 💞`); } catch (ex) { toastError(normalize(ex)); }
+    try { const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: back.k, tone: 'tendre' } }); toast(r.queued ? `${back.e} partira dès le retour du réseau` : `${back.e} renvoyé à ${pn} 💞`); } catch (ex) { toastError(normalize(ex)); }
     o.close();
   });
+  $$('[data-counter]', o.el).forEach((b) => b.addEventListener('click', () => { o.close(); openGesturePicker(b.dataset.counter); }));
   q(sb.rpc('mark_hugs_seen')).then(() => { if (S.home) S.home.unseen_hugs = []; }).catch(() => {});
+}
+
+/* Choisir un geste à renvoyer (contre-geste) : feuille à onglets Tendres / Clashs */
+function openGesturePicker(tab = 'tendre') {
+  const pn = partnerName();
+  const gBtn = (g) => `<button type="button" class="gest-btn ${gestureTone(g) === 'clash' ? 'clash' : ''}" data-hug="${g.k}" aria-label="Envoyer : ${esc(gestureLabel(g, S.me.name))}"><span>${g.e}</span>${esc(gestureLabel(g, S.me.name))}</button>`;
+  const o = overlay(`<div class="card sheet gest-sheet">
+    <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+    <div class="seg" role="tablist">
+      <button type="button" class="seg-btn" data-tab="tendre" aria-pressed="${tab === 'tendre'}">💗 Tendres</button>
+      <button type="button" class="seg-btn" data-tab="clash" aria-pressed="${tab === 'clash'}">💢 Clashs</button>
+    </div>
+    <div class="gest-row all" id="pick-list"></div></div>`);
+  const listEl = $('#pick-list', o.el);
+  const fill = (t) => {
+    listEl.innerHTML = (t === 'clash' ? CLASHS : TENDRE).map(gBtn).join('');
+    $$('.seg-btn', o.el).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.tab === t)));
+    $$('[data-hug]', listEl).forEach((b) => b.addEventListener('click', async () => {
+      const g = gestureOf(b.dataset.hug), tone = gestureTone(g);
+      buzz(tone === 'clash' ? [25, 40, 25] : 18);
+      burstFrom(b, { emojis: tone === 'clash' ? [g.e, '💢'] : [g.e, '💗'], n: 14 });
+      try { const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: g.k, tone } }); toast(r.queued ? `${g.e} partira dès le retour du réseau` : `${g.e} envoyé à ${pn}`); } catch (ex) { toastError(normalize(ex)); }
+      setTimeout(() => o.close(), 300);
+    }));
+  };
+  $$('.seg-btn', o.el).forEach((b) => b.addEventListener('click', () => fill(b.dataset.tab)));
+  $('[data-close]', o.el).addEventListener('click', () => o.close());
+  fill(tab);
 }
 
 /* =====================================================================

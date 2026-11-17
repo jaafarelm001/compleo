@@ -19,30 +19,37 @@ export const ICON = {
 
 /* ---------------- Moods ---------------- */
 export const MOODS = [
-  { k: 'radieux',     e: '🤩', m: 'Radieux',       f: 'Radieuse',      c: '#f5c46a' },
-  { k: 'amoureux',    e: '🥰', m: 'Amoureux',      f: 'Amoureuse',     c: '#ff8fab' },
-  { k: 'calin',       e: '🤗', m: 'Câlin',         f: 'Câline',        c: '#ffb3c7' },
-  { k: 'heureux',     e: '😊', m: 'Heureux',       f: 'Heureuse',      c: '#ffd36e' },
-  { k: 'festif',      e: '🥳', m: 'Festif',        f: 'Festive',       c: '#ff9ed8' },
-  { k: 'coquin',      e: '😏', m: 'Coquin',        f: 'Coquine',       c: '#e86a92' },
-  { k: 'taquin',      e: '😜', m: 'Taquin',        f: 'Taquine',       c: '#ffc15e' },
-  { k: 'motive',      e: '💪', m: 'Motivé',        f: 'Motivée',       c: '#7ed98f' },
-  { k: 'fier',        e: '😎', m: 'Fier',          f: 'Fière',         c: '#6ec6ff' },
-  { k: 'calme',       e: '😌', m: 'Serein',        f: 'Sereine',       c: '#8ee3cf' },
-  { k: 'reveur',      e: '💭', m: 'Rêveur',        f: 'Rêveuse',       c: '#b6c3ff' },
-  { k: 'nostalgique', e: '🥲', m: 'Nostalgique',   f: 'Nostalgique',   c: '#d7b0e8' },
-  { k: 'manque',      e: '🥺', m: 'Tu me manques', f: 'Tu me manques', c: '#c9a7ff' },
-  { k: 'bof',         e: '😐', m: 'Bof',           f: 'Bof',           c: '#b8b8c8' },
-  { k: 'canape',      e: '🛋️', m: 'Mode canapé',   f: 'Mode canapé',   c: '#c9a27e' },
-  { k: 'dormir',      e: '🛌', m: 'Mode dormir',   f: 'Mode dormir',   c: '#7c8fd6' },
-  { k: 'fatigue',     e: '😴', m: 'Fatigué',       f: 'Fatiguée',      c: '#9aa7d6' },
-  { k: 'deborde',     e: '🤯', m: 'Débordé',       f: 'Débordée',      c: '#ffab5e' },
-  { k: 'stresse',     e: '😣', m: 'Stressé',       f: 'Stressée',      c: '#ff9f6e' },
-  { k: 'malade',      e: '🤒', m: 'Patraque',      f: 'Patraque',      c: '#9fd3a8' },
-  { k: 'triste',      e: '😢', m: 'Triste',        f: 'Triste',        c: '#7fb2ff' },
-  { k: 'boude',       e: '😒', m: 'Je boude',      f: 'Je boude',      c: '#a99bc4' },
-  { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a' },
-  { k: 'furieux',     e: '😡', m: 'Très énervé',   f: 'Très énervée',  c: '#ff4d5e' }
+  { k: 'radieux',     e: '🤩', m: 'Radieux',       f: 'Radieuse',      c: '#f5c46a', sub: [['☀️', 'Super journée'], ['🎉', 'Tout me réussit'], ['😁', 'Trop bien là']] },
+  { k: 'amoureux',    e: '🥰', m: 'Amoureux',      f: 'Amoureuse',     c: '#ff8fab', sub: [['💭', 'Je pense à toi'], ['💌', "J'ai envie de toi"], ['🫶', 'Fou·folle de toi']] },
+  { k: 'calin',       e: '🤗', m: 'Câlin',         f: 'Câline',        c: '#ffb3c7', sub: [['🤗', "J'ai besoin d'un câlin"], ['🫂', 'Viens dans mes bras']] },
+  { k: 'heureux',     e: '😊', m: 'Heureux',       f: 'Heureuse',      c: '#ffd36e', sub: [['😊', 'Bonne journée'], ['😌', 'Content·e'], ['☺️', 'Paisible']] },
+  { k: 'festif',      e: '🥳', m: 'Festif',        f: 'Festive',       c: '#ff9ed8', sub: [['🎉', 'En soirée'], ['🥂', 'On fête ça'], ['💃', "J'ai la pêche"]] },
+  { k: 'coquin',      e: '😏', m: 'Coquin',        f: 'Coquine',       c: '#e86a92', sub: [['😏', "J'ai des idées"], ['😈', 'Vilain·e'], ['🔥', 'Chaud·e']] },
+  { k: 'taquin',      e: '😜', m: 'Taquin',        f: 'Taquine',       c: '#ffc15e', sub: [['😜', "Je t'embête"], ['🤪', 'Mode bêtises']] },
+  { k: 'motive',      e: '💪', m: 'Motivé',        f: 'Motivée',       c: '#7ed98f', sub: [['💪', 'À fond'], ['🚀', 'Productif·ve'], ['🎯', 'Déterminé·e']] },
+  { k: 'fier',        e: '😎', m: 'Fier',          f: 'Fière',         c: '#6ec6ff', sub: [['😎', 'Fier·e de moi'], ['🏆', "J'ai réussi un truc"]] },
+  { k: 'calme',       e: '😌', m: 'Serein',        f: 'Sereine',       c: '#8ee3cf', sub: [['😌', 'Zen'], ['🧘', 'Je décompresse'], ['☕', 'Tranquille']] },
+  { k: 'reveur',      e: '💭', m: 'Rêveur',        f: 'Rêveuse',       c: '#b6c3ff', sub: [['💭', 'Dans la lune'], ['✨', 'Je rêvasse']] },
+  { k: 'nostalgique', e: '🥲', m: 'Nostalgique',   f: 'Nostalgique',   c: '#d7b0e8', sub: [['🥲', 'Je repense à nous'], ['📷', 'Dans les souvenirs']] },
+  { k: 'manque',      e: '🥺', m: 'Tu me manques', f: 'Tu me manques', c: '#c9a7ff', sub: [['🥺', 'Tu me manques trop'], ['📞', "Besoin de t'entendre"], ['😔', "Vivement qu'on se voie"]] },
+  { k: 'bof',         e: '😐', m: 'Bof',           f: 'Bof',           c: '#b8b8c8', sub: [['😐', 'Journée moyenne'], ['🤷', 'Comme ci comme ça']] },
+  { k: 'canape',      e: '🛋️', m: 'Mode canapé',   f: 'Mode canapé',   c: '#c9a27e', sub: [['📺', 'Je regarde la télé'], ['🎬', 'Je mate un film'], ['📱', 'Je scrolle'], ['🛋️', 'Je glande']] },
+  { k: 'dormir',      e: '🛌', m: 'Mode dormir',   f: 'Mode dormir',   c: '#7c8fd6', sub: [['🛌', 'Je chille dans mon lit'], ['😴', 'Je fais la sieste'], ['🌙', 'Je vais dormir'], ['📱', 'Au lit sur mon tel']] },
+  { k: 'travail',     e: '💻', m: 'Au travail',    f: 'Au travail',    c: '#8fb8e0', sub: [['💻', 'En télétravail'], ['🏢', 'Au bureau'], ['👥', 'En réunion'], ['🧠', 'Je bosse dur'], ['☕', 'En pause']] },
+  { k: 'faim',        e: '😋', m: "J'ai faim",     f: "J'ai faim",     c: '#f5b971', sub: [['🍳', 'Je cuisine'], ['🍽️', 'Je mange'], ['🍫', 'Je grignote'], ['🥡', 'Je commande']] },
+  { k: 'sport',       e: '🏃', m: 'En sport',      f: 'En sport',      c: '#7ed9a8', sub: [['🏋️', 'À la salle'], ['🏃', 'Je cours'], ['🚶', 'Je marche'], ['🧘', "Je m'étire"]] },
+  { k: 'dehors',      e: '🚶', m: 'Dehors',        f: 'Dehors',        c: '#9fd3b0', sub: [['🛒', 'Je fais les courses'], ['🚗', 'Sur la route'], ['🚆', 'Dans les transports'], ['🌳', "Je prends l'air"]] },
+  { k: 'pause',       e: '☕', m: 'En pause',      f: 'En pause',      c: '#d4b48c', sub: [['☕', 'Pause café'], ['🍵', 'Pause thé'], ['😮‍💨', 'Je souffle 5 min']] },
+  { k: 'occupe',      e: '🤹', m: 'Occupé',        f: 'Occupée',       c: '#e0a978', sub: [['🤹', 'Débordé·e'], ['📵', 'Pas dispo là'], ['⏳', 'Rappelle-moi plus tard']] },
+  { k: 'ennui',       e: '😑', m: "Je m'ennuie",   f: "Je m'ennuie",   c: '#b0b4c4', sub: [['😑', 'Je tourne en rond'], ['🥱', 'Rien à faire'], ['📱', 'Occupe-moi']] },
+  { k: 'fatigue',     e: '😴', m: 'Fatigué',       f: 'Fatiguée',      c: '#9aa7d6', sub: [['🥱', 'Épuisé·e'], ['😮‍💨', 'Vidé·e'], ['🛌', 'Besoin de dormir']] },
+  { k: 'deborde',     e: '🤯', m: 'Débordé',       f: 'Débordée',      c: '#ffab5e', sub: [['🤯', 'Trop de choses'], ['😵‍💫', "Sous l'eau"]] },
+  { k: 'stresse',     e: '😣', m: 'Stressé',       f: 'Stressée',      c: '#ff9f6e', sub: [['😣', 'La pression'], ['😰', 'Anxieux·se'], ['😤', 'Sous tension']] },
+  { k: 'malade',      e: '🤒', m: 'Patraque',      f: 'Patraque',      c: '#9fd3a8', sub: [['🤒', 'Patraque'], ['🤧', 'Enrhumé·e'], ['🛌', 'Alité·e']] },
+  { k: 'triste',      e: '😢', m: 'Triste',        f: 'Triste',        c: '#7fb2ff', sub: [['😢', 'Coup de blues'], ['😔', 'Pas le moral'], ['🥺', 'Besoin de réconfort']] },
+  { k: 'boude',       e: '😒', m: 'Je boude',      f: 'Je boude',      c: '#a99bc4', sub: [['😒', 'Je boude'], ['🙄', 'Mouais']] },
+  { k: 'grognon',     e: '😤', m: 'Grognon',       f: 'Grognonne',     c: '#ff7a7a', sub: [['😤', "Pas d'humeur"], ['😠', 'Ronchon']] },
+  { k: 'furieux',     e: '😡', m: 'Très énervé',   f: 'Très énervée',  c: '#ff4d5e', sub: [['😡', 'Très énervé·e'], ['🤬', 'En colère'], ['💢', 'Ça déborde']] }
 ];
 /* ---------------- Gestes ----------------
  * l : libellé du bouton (s = prénom de celui qui envoie) ; say : ce que voit celui qui reçoit (p = prénom de l'envoyeur) */
@@ -70,9 +77,24 @@ export const GESTURES = [
   { k: 'courage',     e: '💪', l: 'Courage',            say: (p) => `${p} t'envoie plein de courage` },
   { k: 'fier',        e: '🏅', l: (s) => (s === 'Audrey' ? 'Fière de toi' : 'Fier de toi'), say: (p) => `${p} est ${p === 'Audrey' ? 'fière' : 'fier'} de toi` },
   { k: 'merci',       e: '💐', l: 'Merci',              say: (p) => `${p} te dit merci` },
-  { k: 'pardon',      e: '🙏', l: 'Pardon',             say: (p) => `${p} te demande pardon` }
+  { k: 'pardon',      e: '🙏', l: 'Pardon',             say: (p) => `${p} te demande pardon` },
+  // --- gestes clash (chamailleries) ---
+  { k: 'enerve',    e: '😤', tone: 'clash', l: 'Tu m\'énerves',        say: (p) => `${p} dit que tu l'énerves` },
+  { k: 'tete',      e: '😠', tone: 'clash', l: 'Je te fais la tête',   say: (p) => `${p} te fait la tête` },
+  { k: 'boudeur',   e: '🙄', tone: 'clash', l: 'Je te boude',          say: (p) => `${p} te boude` },
+  { k: 'jaloux',    e: '😒', tone: 'clash', l: (s) => (s === 'Audrey' ? 'Jalouse' : 'Jaloux'), say: (p) => `${p} est ${p === 'Audrey' ? 'jalouse' : 'jaloux'}` },
+  { k: 'pff',       e: '🗯️', tone: 'clash', l: 'Pff…',                 say: (p) => `${p} te fait « pff »` },
+  { k: 'grr',       e: '💢', tone: 'clash', l: 'Grrr',                 say: (p) => `${p} est à cran` },
+  { k: 'rangetel',  e: '📵', tone: 'clash', l: 'Pose ton téléphone',   say: (p) => `${p} veut que tu poses ton téléphone` },
+  { k: 'reviens',   e: '🫵', tone: 'clash', l: 'Reviens ici !',        say: (p) => `${p} veut que tu reviennes` },
+  { k: 'vexe',      e: '😾', tone: 'clash', l: (s) => (s === 'Audrey' ? 'Je suis vexée' : 'Je suis vexé'), say: (p) => `${p} est ${p === 'Audrey' ? 'vexée' : 'vexé'}` },
+  { k: 'vengeance', e: '😈', tone: 'clash', l: 'Vengeance !',          say: (p) => `${p} prépare sa vengeance` }
 ];
 export const gestureOf = (k) => GESTURES.find((g) => g.k === k) || GESTURES[0];
+export const gestureTone = (g) => (g && g.tone === 'clash' ? 'clash' : 'tendre');
+export const TENDRE = GESTURES.filter((g) => gestureTone(g) === 'tendre');
+export const CLASHS = GESTURES.filter((g) => gestureTone(g) === 'clash');
+export const submoodsOf = (k) => { const m = moodOf(k); return (m && m.sub) ? m.sub.map(([e, l]) => `${e} ${l}`) : []; };
 export const gestureLabel = (g, sender) => (typeof g.l === 'function' ? g.l(sender) : g.l);
 
 export const moodOf = (k) => MOODS.find((m) => m.k === k) || null;

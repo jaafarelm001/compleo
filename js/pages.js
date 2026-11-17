@@ -4,7 +4,7 @@
 import { $, $$, esc, uuid, sb, q, load, send, cache, store, normalize, isOnline, log, PEOPLE } from './core.js';
 import { S, hooks, isJaafar, isAudrey, partnerName, nameOf } from './state.js';
 import {
-  ICON, MOODS, moodOf, moodLabel, GESTURES, gestureOf, gestureLabel, timeIn, hourIn, dayIn, addDays, dayLabel, fmtDateTime, fmtDate, fmtDay, ago, until, untilText,
+  ICON, MOODS, moodOf, moodLabel, submoodsOf, GESTURES, TENDRE, CLASHS, gestureOf, gestureLabel, gestureTone, timeIn, hourIn, dayIn, addDays, dayLabel, fmtDateTime, fmtDate, fmtDay, ago, until, untilText,
   toLocalInput, fromLocalInput, daysBetween, toast, toastError, overlay, confirmDialog, busy, skeleton, emptyState, errorBox, charCounter
 } from './ui.js';
 import { HEART, burstFrom, heartRain, confetti, buzz, reduced } from './fx.js';
@@ -110,7 +110,7 @@ function homePage(el) {
   const useKey = `gest-use:${me.id}`;
   const favs = () => {
     const use = store.get(useKey, {});
-    return GESTURES.map((g, i) => [g, (use[g.k] || 0) * 100 - i]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([g]) => g);
+    return TENDRE.map((g, i) => [g, (use[g.k] || 0) * 100 - i]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([g]) => g);
   };
   const gBtn = (g) => `<button type="button" class="gest-btn" data-hug="${g.k}" aria-label="Envoyer : ${esc(gestureLabel(g, me.name))}"><span>${g.e}</span>${esc(gestureLabel(g, me.name))}</button>`;
   const renderFavs = () => {
@@ -119,12 +119,27 @@ function homePage(el) {
     $$('[data-hug]', box).forEach((b) => b.addEventListener('click', () => sendHug(b)));
   };
   renderFavs();
-  $('#g-all', el).addEventListener('click', () => {
-    const o = overlay(`<div class="card sheet gest-sheet"><div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
-      <div class="gest-row all">${GESTURES.map(gBtn).join('')}</div></div>`);
+  $('#g-all', el).addEventListener('click', () => openGestureSheet());
+  function openGestureSheet(tab = 'tendre') {
+    const o = overlay(`<div class="card sheet gest-sheet">
+      <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+      <div class="seg" role="tablist">
+        <button type="button" class="seg-btn" data-tab="tendre" aria-pressed="${tab === 'tendre'}">💗 Tendres</button>
+        <button type="button" class="seg-btn" data-tab="clash" aria-pressed="${tab === 'clash'}">💢 Clashs</button>
+      </div>
+      <p class="faint small clash-hint" ${tab === 'clash' ? '' : 'hidden'} id="gs-hint">Les clashs vont dans la chamaillerie, pas de panique 😇</p>
+      <div class="gest-row all" id="gs-list"></div></div>`);
+    const list = $('#gs-list', o.el), hint = $('#gs-hint', o.el);
+    const fill = (t) => {
+      list.innerHTML = (t === 'clash' ? CLASHS : TENDRE).map(gBtn).join('');
+      hint.hidden = t !== 'clash';
+      $$('.seg-btn', o.el).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.tab === t)));
+      $$('[data-hug]', list).forEach((b) => b.addEventListener('click', async () => { await sendHug(b); setTimeout(() => o.close(), 350); }));
+    };
+    $$('.seg-btn', o.el).forEach((b) => b.addEventListener('click', () => fill(b.dataset.tab)));
     $('[data-close]', o.el).addEventListener('click', () => o.close());
-    $$('[data-hug]', o.el).forEach((b) => b.addEventListener('click', async () => { await sendHug(b); setTimeout(() => o.close(), 350); }));
-  });
+    fill(tab);
+  }
   $('#h-hero', el).addEventListener('click', (e) => { if (!e.target.closest('a,button')) hooks.shootingStar && hooks.shootingStar(); });
 
   const greet = () => {
@@ -156,6 +171,7 @@ function homePage(el) {
         <span class="who-l">${esc(n)}${isToday ? '' : ` · ${esc(dayLabel(m.day, { day: 'numeric', month: 'short' }))}`}</span>
         <span class="emo">${moodOf(m.mood)?.e || '🙂'}</span>
         <span class="lab">${esc(moodLabel(m.mood, n))}</span>
+        ${m.submood ? `<span class="submood-tag">${esc(m.submood)}</span>` : ''}
         ${m.note ? `<span class="nt">${esc(m.note)}</span>` : ''}
         ${!isToday && n === me.name ? '<a class="link-btn" href="#/mood">Mettre à jour</a>' : ''}
       </div>`;
@@ -204,7 +220,7 @@ function homePage(el) {
     }</span></span>${ICON.chev}`;
     // stats
     const st = d.stats || {};
-    const items = [[c.unlocked || 0, 'compliments'], [st.answers || 0, 'questions à deux'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'gestes envoyés'], [st.memories || 0, 'souvenirs']];
+    const items = [[c.unlocked || 0, 'compliments'], [st.answers || 0, 'questions à deux'], [st.mood_days || 0, 'jours de moods partagés'], [st.notes || 0, 'mots doux'], [st.hugs || 0, 'gestes tendres'], [st.clashs || 0, 'clashs'], [st.memories || 0, 'souvenirs']];
     $('#h-stats', el).innerHTML = items.map(([v, l]) => `<div class="stat"><b>${typeof v === 'number' ? v.toLocaleString('fr-FR') : v}</b><span>${l}</span></div>`).join('');
   }
 
@@ -251,14 +267,16 @@ function homePage(el) {
   const iv = setInterval(tickClocks, 1000);
 
   async function sendHug(btn) {
-    const g = gestureOf(btn.dataset.hug), label = gestureLabel(g, me.name);
-    buzz(18);
-    burstFrom(btn, { emojis: [g.e, '💗', '✨'], n: 14 });
+    const g = gestureOf(btn.dataset.hug), label = gestureLabel(g, me.name), tone = gestureTone(g);
+    buzz(tone === 'clash' ? [25, 40, 25] : 18);
+    burstFrom(btn, { emojis: tone === 'clash' ? [g.e, '💢', '😤'] : [g.e, '💗', '✨'], n: 14 });
     try {
-      const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: g.k } });
+      const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: g.k, tone } });
+      const verb = tone === 'clash' ? 'Clash' : 'Geste';
       toast(r.queued ? `${g.e} « ${label} » partira dès le retour du réseau` : `${g.e} « ${label} » envoyé à ${pn}`);
+      void verb;
       const use = store.get(useKey, {}); use[g.k] = (use[g.k] || 0) + 1; store.set(useKey, use);
-      if ($('#g-fav', el)) renderFavs();
+      if ($('#g-fav', el) && tone === 'tendre') renderFavs();
     } catch (e) { toastError(normalize(e)); }
   }
 
@@ -276,7 +294,7 @@ function homePage(el) {
    ===================================================================== */
 function moodPage(el) {
   const me = S.me, pn = partnerName();
-  let selected = null;
+  let selected = null, subSelected = null;
   el.innerHTML = `
     ${pageHead('Mon mood du jour', `${esc(pn)} le voit dès que tu le partages, et tu vois le sien. Un par jour, modifiable jusqu'à minuit.`)}
     <div class="grid two">
@@ -284,6 +302,10 @@ function moodPage(el) {
         <form class="form" id="mood-form" novalidate>
           <div class="mood-grid" role="group" aria-label="Choisis ton mood">
             ${MOODS.map((m) => `<button type="button" class="mood-opt" style="--c:${m.c}" data-mood="${m.k}" aria-pressed="false"><span>${m.e}</span>${esc(me.name === 'Audrey' ? m.f : m.m)}</button>`).join('')}
+          </div>
+          <div id="submood-zone" class="submood-zone" hidden>
+            <span class="lbl">Un peu plus précis ? <span class="faint">(facultatif)</span></span>
+            <div class="submood-chips" id="submood-chips" role="group" aria-label="Choisis un sous-mood"></div>
           </div>
           <div>
             <label class="lbl" for="mood-note">Un petit mot (facultatif)</label>
@@ -305,10 +327,24 @@ function moodPage(el) {
 
   const note = $('#mood-note', el);
   charCounter(note, 280);
-  const pick = (k) => {
+  const renderSubmoods = (k) => {
+    const subs = submoodsOf(k);
+    const zone = $('#submood-zone', el), box = $('#submood-chips', el);
+    if (!subs.length) { zone.hidden = true; box.innerHTML = ''; return; }
+    zone.hidden = false;
+    box.innerHTML = subs.map((t) => `<button type="button" class="submood-chip" data-sub="${esc(t)}" aria-pressed="${String(t === subSelected)}">${esc(t)}</button>`).join('');
+    $$('.submood-chip', box).forEach((b) => b.addEventListener('click', () => {
+      subSelected = (subSelected === b.dataset.sub) ? null : b.dataset.sub;  // re-cliquer = désélectionner
+      $$('.submood-chip', box).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sub === subSelected)));
+      buzz(6);
+    }));
+  };
+  const pick = (k, keepSub) => {
+    if (selected !== k && !keepSub) subSelected = null;
     selected = k;
     $$('.mood-opt', el).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mood === k)));
     $('#mood-err', el).textContent = '';
+    renderSubmoods(k);
   };
   $$('.mood-opt', el).forEach((b) => b.addEventListener('click', () => { pick(b.dataset.mood); buzz(8); burstFrom(b, { n: 6, spread: 50, emojis: [moodOf(b.dataset.mood).e] }); }));
 
@@ -319,10 +355,10 @@ function moodPage(el) {
     const btn = $('#mood-submit', el);
     await busy(btn, async () => {
       try {
-        const r = await send({ type: 'rpc', name: 'set_my_mood', args: { p_mood: selected, p_note: note.value.trim() || null } });
+        const r = await send({ type: 'rpc', name: 'set_my_mood', args: { p_mood: selected, p_submood: subSelected || null, p_note: note.value.trim() || null } });
         // mise à jour immédiate de l'affichage (et du cache)
         const today = myToday();
-        const row = { user_id: me.id, day: today, mood: selected, note: note.value.trim() || null, updated_at: new Date().toISOString() };
+        const row = { user_id: me.id, day: today, mood: selected, submood: subSelected || null, note: note.value.trim() || null, updated_at: new Date().toISOString() };
         const list = (cache.get('moods') || []).filter((m) => !(m.user_id === me.id && m.day === today)).concat(row);
         cache.set('moods', list);
         if (S.home) { S.home.moods = { ...(S.home.moods || {}), me: row }; cache.set('home', S.home); }
@@ -339,7 +375,7 @@ function moodPage(el) {
     const today = myToday();
     const mine = list.find((m) => m.user_id === me.id && m.day === today);
     if (mine && !prefilled) {
-      prefilled = true; pick(mine.mood);
+      prefilled = true; subSelected = mine.submood || null; pick(mine.mood, true);
       if (!note.value) { note.value = mine.note || ''; note.dispatchEvent(new Event('input')); }
       $('#mood-submit', el).textContent = 'Mettre à jour mon mood';
     }
@@ -348,7 +384,7 @@ function moodPage(el) {
     const theirs = list.filter((m) => m.user_id !== me.id).sort((a, b) => (a.day < b.day ? 1 : -1))[0];
     const box = (n, m, isToday) => !m
       ? `<div class="mood-box empty"><span class="who-l">${esc(n)}</span><span class="emo">🌙</span><span class="lab">Pas encore partagé</span></div>`
-      : `<div class="mood-box ${isToday ? '' : 'empty'}"><span class="who-l">${esc(n)}${isToday ? '' : ` · ${esc(dayLabel(m.day, { day: 'numeric', month: 'short' }))}`}</span><span class="emo">${moodOf(m.mood)?.e}</span><span class="lab">${esc(moodLabel(m.mood, n))}</span>${m.note ? `<span class="nt">${esc(m.note)}</span>` : ''}</div>`;
+      : `<div class="mood-box ${isToday ? '' : 'empty'}"><span class="who-l">${esc(n)}${isToday ? '' : ` · ${esc(dayLabel(m.day, { day: 'numeric', month: 'short' }))}`}</span><span class="emo">${moodOf(m.mood)?.e}</span><span class="lab">${esc(moodLabel(m.mood, n))}</span>${m.submood ? `<span class="submood-tag">${esc(m.submood)}</span>` : ''}${m.note ? `<span class="nt">${esc(m.note)}</span>` : ''}</div>`;
     $('#mood-today', el).innerHTML = box(me.name, mine, true) + box(pn, theirs, theirs && theirs.day === ptoday);
     // historique : 14 jours × 2 personnes
     const days = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
@@ -364,7 +400,7 @@ function moodPage(el) {
       const m = byKey.get(b.dataset.k); if (!m) return;
       const n = b.dataset.k.startsWith('me') ? me.name : pn;
       const o = overlay(`<div class="card sheet" style="text-align:center"><div style="font-size:56px">${moodOf(m.mood).e}</div>
-        <h2>${esc(n)} : ${esc(moodLabel(m.mood, n))}</h2><p class="muted">${esc(fmtDay(m.day))}</p>
+        <h2>${esc(n)} : ${esc(moodLabel(m.mood, n))}</h2>${m.submood ? `<p class="submood-tag" style="justify-self:center;margin:4px auto 0">${esc(m.submood)}</p>` : ''}<p class="muted">${esc(fmtDay(m.day))}</p>
         ${m.note ? `<p class="serif it" style="font-size:19px;margin-top:14px">« ${esc(m.note)} »</p>` : ''}
         <button type="button" class="btn ghost" style="margin-top:20px" data-close>Fermer</button></div>`);
       $('[data-close]', o.el).addEventListener('click', () => o.close());
@@ -373,7 +409,7 @@ function moodPage(el) {
   }
 
   const update = () => region($('#mood-hist', el), 'moods',
-    () => q(sb.from('moods').select('user_id,day,mood,note,updated_at').gte('day', addDays(myToday(), -20)).order('day')),
+    () => q(sb.from('moods').select('user_id,day,mood,submood,note,updated_at').gte('day', addDays(myToday(), -20)).order('day')),
     renderData);
   update();
   return { update };
@@ -992,6 +1028,7 @@ function usPage(el) {
       ['musique', '🎵', 'Notre musique', `${st.songs || 0} morceau${(st.songs || 0) > 1 ? 'x' : ''}`],
       ['capsules', '✉️', 'Capsules temporelles', `${st.letters || 0} lettre${(st.letters || 0) > 1 ? 's' : ''}`],
       ['souvenirs', '📸', 'Nos souvenirs', `${st.memories || 0} photo${(st.memories || 0) > 1 ? 's' : ''}`],
+      ['clashs', '💢', 'Nos clashs', `${st.clashs || 0} chamaillerie${(st.clashs || 0) > 1 ? 's' : ''}`],
       ['reglages', '⚙️', 'Réglages', 'Dates, PIN, notifications']
     ];
     el.innerHTML = `${pageHead('Rien qu\'à nous', 'Tous vos petits espaces partagés.')}
@@ -1464,6 +1501,69 @@ function settingsPage(el) {
 /* =====================================================================
    Table des routes
    ===================================================================== */
+
+/* =====================================================================
+   NOS CLASHS (chamailleries : gestes négatifs)
+   ===================================================================== */
+function clashsPage(el) {
+  const me = S.me, pn = partnerName();
+  const useKey = `gest-use:${me.id}`;
+  el.innerHTML = `
+    ${pageHead('Nos clashs', 'Les petites chamailleries, pour de faux. On se réconcilie toujours à la fin 💗', 'nous')}
+    <article class="card">
+      <div class="clash-score" id="clash-score">${skeleton(1, 90)}</div>
+    </article>
+    <article class="card" style="margin-top:16px">
+      <div class="card-head"><h2>Envoyer un clash à ${esc(pn)}</h2></div>
+      <div class="gest-row all" id="clash-send"></div>
+      <p class="faint small" style="margin-top:10px">Envie de faire la paix ? <a class="link-btn" href="#/accueil">Envoie plutôt un geste tendre</a>.</p>
+    </article>
+    <article class="card" style="margin-top:16px">
+      <div class="card-head"><h2>Dernières chamailleries</h2></div>
+      <ul class="feed clash-feed" id="clash-list">${skeleton(3, 60)}</ul>
+    </article>`;
+
+  const renderScore = () => {
+    const st = homeData().stats || {};
+    const mine = st.clashs_me || 0, theirs = st.clashs_pa || 0, total = mine + theirs;
+    const leader = mine > theirs ? me.name : theirs > mine ? pn : null;
+    $('#clash-score', el).innerHTML = `
+      <div class="clash-tally">
+        <div class="${mine >= theirs && total ? 'win' : ''}"><span class="avatar sm">${esc(me.name.charAt(0))}</span><b>${mine}</b><span>${esc(me.name)}</span></div>
+        <div class="vs">💢</div>
+        <div class="${theirs >= mine && total ? 'win' : ''}"><span class="avatar sm a2">${esc(pn.charAt(0))}</span><b>${theirs}</b><span>${esc(pn)}</span></div>
+      </div>
+      <p class="muted small" style="text-align:center;margin-top:10px">${!total ? 'Aucun clash pour l\'instant. Tout roule 🕊️' : leader ? `${esc(leader)} boude le plus 😤` : 'Parfaitement à égalité, quelle complicité 😏'}</p>`;
+  };
+
+  const gBtn = (g) => `<button type="button" class="gest-btn clash" data-hug="${g.k}" aria-label="Envoyer : ${esc(gestureLabel(g, me.name))}"><span>${g.e}</span>${esc(gestureLabel(g, me.name))}</button>`;
+  $('#clash-send', el).innerHTML = CLASHS.map(gBtn).join('');
+  $$('#clash-send [data-hug]', el).forEach((b) => b.addEventListener('click', async () => {
+    const g = gestureOf(b.dataset.hug);
+    buzz([25, 40, 25]); burstFrom(b, { emojis: [g.e, '💢', '😤'], n: 14 });
+    try {
+      const r = await send({ type: 'insert', table: 'hugs', row: { id: uuid(), kind: g.k, tone: 'clash' } });
+      toast(r.queued ? `${g.e} partira dès le retour du réseau` : `${g.e} « ${esc(gestureLabel(g, me.name))} » envoyé à ${pn}`);
+      const use = store.get(useKey, {}); use[g.k] = (use[g.k] || 0) + 1; store.set(useKey, use);
+      hooks.loadHome();
+    } catch (e) { toastError(normalize(e)); }
+  }));
+
+  const loadList = () => region($('#clash-list', el), 'clashs',
+    () => q(sb.from('hugs').select('id,from_id,kind,created_at').eq('tone', 'clash').order('created_at', { ascending: false }).limit(40)),
+    (rows) => {
+      $('#clash-list', el).innerHTML = (rows && rows.length)
+        ? rows.map((h) => {
+            const g = gestureOf(h.kind), sender = nameOf(h.from_id);
+            return `<li class="clash-item"><span class="e">${g.e}</span><span class="tx"><b>${esc(sender)}</b> ${esc(g.say(sender))}</span><time>${esc(ago(h.created_at))}</time></li>`;
+          }).join('')
+        : emptyState('🕊️', 'Aucune chamaillerie. Vous êtes trop sages !');
+    });
+
+  renderScore(); loadList();
+  return { update: () => { renderScore(); loadList(); } };
+}
+
 export const PAGES = {
   accueil:     { title: 'Accueil', tab: 'accueil', mount: homePage },
   mood:        { title: 'Mood', tab: 'mood', mount: moodPage },
@@ -1474,5 +1574,6 @@ export const PAGES = {
   musique:     { title: 'Musique', tab: 'nous', mount: musicPage },
   capsules:    { title: 'Capsules', tab: 'nous', mount: lettersPage },
   souvenirs:   { title: 'Souvenirs', tab: 'nous', mount: memoriesPage },
+  clashs:      { title: 'Nos clashs', tab: 'nous', mount: clashsPage },
   reglages:    { title: 'Réglages', tab: 'nous', mount: settingsPage }
 };
