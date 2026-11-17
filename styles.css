@@ -734,3 +734,18 @@ button.cell:hover { transform: scale(1.1); }
 .place-opt:hover { border-color: rgba(255, 143, 171, .5); }
 .place-opt:active { transform: scale(.96); }
 .place-opt.on { background: rgba(255, 143, 171, .2); border-color: var(--rose); }
+
+/* ---------- Créateur de clash perso ---------- */
+.gest-btn.create { border-style: dashed; border-color: rgba(255, 143, 171, .5); background: rgba(255, 143, 171, .06); }
+.gest-btn.create span { font-size: 22px; }
+.gest-btn.custom { position: relative; }
+.clash-creator { width: min(460px, 100%); }
+.clash-creator .lbl { display: block; margin-bottom: 6px; }
+.emoji-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-opt { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: rgba(10, 6, 34, .3); font-size: 22px; line-height: 1; transition: transform .15s var(--spring), border-color .2s, background .2s; }
+.emoji-opt:active { transform: scale(.9); }
+.emoji-opt.on { background: rgba(255, 143, 171, .2); border-color: var(--rose); transform: scale(1.06); }
+.cc-list { display: grid; gap: 8px; }
+.cc-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: var(--r-sm); background: rgba(255, 77, 94, .07); border: 1px solid var(--line); font-size: 14.5px; }
+.cc-del { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: rgba(10, 6, 34, .3); color: var(--muted); font-size: 14px; flex: none; }
+.cc-del:hover { border-color: var(--rose-deep); color: var(--rose); }

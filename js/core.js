@@ -174,6 +174,7 @@ export const outbox = {
 async function runOp(op) {
   if (op.type === 'rpc') return q(sb.rpc(op.name, op.args));
   if (op.type === 'insert') return q(sb.from(op.table).insert(op.row));
+  if (op.type === 'delete') return q(sb.from(op.table).delete().match(op.match));
   throw new AppError('unknown', 'opération inconnue');
 }
 
@@ -211,3 +212,13 @@ async function flushLogs() {
   const batch = logQueue.splice(0, logQueue.length);
   try { await sb.from('client_logs').insert(batch); } catch {}
 }
+
+/* ---------------- Gestes personnalisés (clashs/tendres écrits par le couple) ---------------- */
+export async function loadCustomGestures() {
+  try {
+    const rows = await q(sb.from('custom_gestures').select('id,emoji,label,tone,created_by').order('created_at'));
+    cache.set('custom', rows || []);
+    return rows || [];
+  } catch (e) { return cache.get('custom') || []; }
+}
+export const customGestures = (tone) => (cache.get('custom') || []).filter((g) => !tone || g.tone === tone);

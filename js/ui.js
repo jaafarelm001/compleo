@@ -95,6 +95,9 @@ export const gestureTone = (g) => (g && g.tone === 'clash' ? 'clash' : 'tendre')
 export const TENDRE = GESTURES.filter((g) => gestureTone(g) === 'tendre');
 export const CLASHS = GESTURES.filter((g) => gestureTone(g) === 'clash');
 export const submoodsOf = (k) => { const m = moodOf(k); return (m && m.sub) ? m.sub.map(([e, l]) => `${e} ${l}`) : []; };
+export const hugView = (h, sender) => (h && h.kind === 'custom')
+  ? { e: h.emoji || '💢', tone: h.tone || 'clash', text: `${sender} : « ${h.label || ''} »`, label: h.label || '' }
+  : (() => { const g = gestureOf(h && h.kind); return { e: g.e, tone: gestureTone(g), text: g.say(sender), label: gestureLabel(g, sender) }; })();
 export const gestureLabel = (g, sender) => (typeof g.l === 'function' ? g.l(sender) : g.l);
 
 export const moodOf = (k) => MOODS.find((m) => m.k === k) || null;
