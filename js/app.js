@@ -386,8 +386,14 @@ function onDbChange(table, p) {
   const ins = p.eventType === 'INSERT';
   const pn = partnerName();
 
-  if (table === 'profiles') {   // simple « vu à » : pas de rechargement (évite les allers-retours)
-    if (pid && row.id === pid && S.home) { S.home.partner.last_seen_at = row.last_seen_at; renderPresence(); }
+  if (table === 'profiles') {   // « vu à » + lieu/fuseau du partenaire
+    if (pid && row.id === pid && S.home && S.home.partner) {
+      S.home.partner.last_seen_at = row.last_seen_at;
+      const moved = S.home.partner.place !== row.place || S.home.partner.tz !== row.tz;
+      S.home.partner.place = row.place; S.home.partner.tz = row.tz;
+      renderPresence();
+      if (moved) { cache.set('home', S.home); if (current && current.name === 'accueil') refreshPage(); }
+    }
     return;
   }
   if (table === 'hugs' && ins && row.to_id === S.me.id) showHug([row]);

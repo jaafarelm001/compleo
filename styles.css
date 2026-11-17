@@ -714,3 +714,23 @@ button.cell:hover { transform: scale(1.1); }
 .clash-item .e { font-size: 24px; }
 .clash-item .tx { font-size: 14.5px; overflow-wrap: anywhere; }
 .clash-item time { color: var(--faint); font-size: 12.5px; white-space: nowrap; }
+
+/* ---------- Lieu éditable (accueil) ---------- */
+.where.edit {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px;
+  background: rgba(255, 255, 255, .06); border: 1px solid var(--line); color: inherit; font: inherit;
+  cursor: pointer; transition: border-color .2s, background .2s;
+}
+.where.edit:hover { border-color: rgba(255, 143, 171, .5); background: rgba(255, 143, 171, .1); }
+.where.edit .caret { font-size: 10px; opacity: .7; }
+.place-sheet { width: min(420px, 100%); }
+.place-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.place-opt {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--r-md);
+  background: rgba(10, 6, 34, .3); border: 1px solid var(--line); color: var(--moon); font-weight: 600; font-size: 15px;
+  transition: transform .15s var(--spring), border-color .2s, background .2s;
+}
+.place-opt span { font-size: 24px; }
+.place-opt:hover { border-color: rgba(255, 143, 171, .5); }
+.place-opt:active { transform: scale(.96); }
+.place-opt.on { background: rgba(255, 143, 171, .2); border-color: var(--rose); }

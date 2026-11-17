@@ -39,6 +39,10 @@ async function region(el, key, fetcher, render) {
    ===================================================================== */
 function homePage(el) {
   const me = S.me, pn = partnerName();
+  const livePerson = (n) => { const d = homeData(); return (S.me && n === S.me.name) ? (d.me || {}) : (d.partner || {}); };
+  const liveTz = (n) => livePerson(n).tz || personInfo(n).tz || 'Europe/Paris';
+  const livePlace = (n) => livePerson(n).place || personInfo(n).city || '';
+  const PLACES = [['🇲🇦', 'Maroc', 'Africa/Casablanca'], ['🇫🇷', 'France', 'Europe/Paris'], ['✈️', 'En avion', null], ['✏️', 'Autre…', '_custom']];
   const left = me.name === 'Jaafar' ? me.name : pn;   // Casablanca à gauche, France à droite
   const right = left === 'Jaafar' ? 'Audrey' : 'Jaafar';
   el.innerHTML = `
@@ -54,9 +58,11 @@ function homePage(el) {
           </svg>
           ${[left, right].map((n, i) => `
             <div class="city ${i ? 'r' : ''}" data-person="${n}">
-              <span class="clock" data-clock="${esc(personInfo(n).tz || 'Europe/Paris')}">--:--</span>
+              <span class="clock" data-clock="${esc(liveTz(n))}">--:--</span>
               <span class="nm">${esc(n)}${n === me.name ? ' <span class="faint small">(toi)</span>' : ''}</span>
-              <span class="where">${esc(personInfo(n).city || '')}</span>
+              ${n === me.name
+                ? `<button type="button" class="where edit" id="h-place" aria-label="Changer mon lieu">${esc(livePlace(n)) || 'Ajouter mon lieu'} <span class="caret">▾</span></button>`
+                : `<span class="where">${esc(livePlace(n))}</span>`}
               <span class="md" data-mood-of="${n}"></span>
             </div>`).join('')}
         </div>
@@ -119,6 +125,42 @@ function homePage(el) {
     $$('[data-hug]', box).forEach((b) => b.addEventListener('click', () => sendHug(b)));
   };
   renderFavs();
+
+  // --- Lieu : chacun gère le sien (Maroc / France / En avion / autre) ---
+  const syncPlaces = () => {
+    for (const n of ['Jaafar', 'Audrey']) {
+      const cityEl = $(`.city[data-person="${n}"]`, el); if (!cityEl) continue;
+      const clk = $('.clock', cityEl); if (clk) clk.dataset.clock = liveTz(n);
+      const w = $('.where', cityEl);
+      if (w) { const txt = livePlace(n); if (n === me.name) w.innerHTML = `${esc(txt) || 'Ajouter mon lieu'} <span class="caret">▾</span>`; else w.textContent = txt; }
+    }
+  };
+  const placeBtn = $('#h-place', el);
+  if (placeBtn) placeBtn.addEventListener('click', () => {
+    const cur = livePlace(me.name);
+    const o = overlay(`<div class="card sheet place-sheet">
+      <div class="card-head"><h2>Où es-tu&nbsp;?</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+      <p class="muted small">Ton horloge et ton lieu sur l'accueil suivent ce que tu choisis. ${esc(pn)} le voit aussi.</p>
+      <div class="place-opts">${PLACES.map(([e, l, tz]) => `<button type="button" class="place-opt ${l === cur ? 'on' : ''}" data-place="${esc(l)}" data-tz="${tz || ''}"><span>${e}</span>${esc(l)}</button>`).join('')}</div>
+    </div>`);
+    $('[data-close]', o.el).addEventListener('click', () => o.close());
+    $$('.place-opt', o.el).forEach((b) => b.addEventListener('click', async () => {
+      let label = b.dataset.place, tz = b.dataset.tz || null;
+      if (tz === '_custom') { const v = prompt('Où es-tu ?', cur || ''); if (v === null) return; label = v.trim().slice(0, 40); tz = null; }
+      o.close();
+      await savePlace(label, tz);
+    }));
+  });
+  async function savePlace(label, tz) {
+    try {
+      await send({ type: 'rpc', name: 'set_my_place', args: { p_place: label || null, p_tz: tz } });
+      if (S.home && S.home.me) { S.home.me.place = label || null; if (tz) S.home.me.tz = tz; cache.set('home', S.home); }
+      if (S.me && tz) S.me.tz = tz;
+      syncPlaces(); buzz(10);
+      toast(label ? `Lieu mis à jour : ${label}` : 'Lieu retiré');
+      hooks.loadHome();
+    } catch (e) { toastError(normalize(e)); }
+  }
   $('#g-all', el).addEventListener('click', () => openGestureSheet());
   function openGestureSheet(tab = 'tendre') {
     const o = overlay(`<div class="card sheet gest-sheet">
@@ -155,6 +197,7 @@ function homePage(el) {
     // sous-titre
     $('#h-sub', el).textContent = 'Le même ciel au-dessus de nous deux.';
     // moods sur la carte des villes
+    syncPlaces();
     for (const n of ['Jaafar', 'Audrey']) {
       const m = n === me.name ? d.moods && d.moods.me : d.moods && d.moods.partner;
       const box = $(`[data-mood-of="${n}"]`, el);
