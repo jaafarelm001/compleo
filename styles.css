@@ -371,7 +371,7 @@ button.chip[aria-pressed="true"] { background: rgba(255, 143, 171, .2); border-c
 .cities { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; margin-top: 10px; column-gap: 12px; }
 .cities svg.arc { grid-column: 1 / -1; display: block; width: 100%; height: clamp(54px, 11vw, 92px); overflow: visible; cursor: default; }
 .arc path.track { fill: none; stroke: rgba(245, 196, 106, .6); stroke-width: 1.6; stroke-dasharray: 2 9; stroke-linecap: round; }
-.arc .end { fill: var(--rose); filter: drop-shadow(0 0 7px rgba(255, 143, 171, .95)); }
+.arc .end { display: none; }   /* les photos servent d'ancrage à l'arc */
 .arc .traveler { fill: #ffc2d1; filter: drop-shadow(0 0 8px rgba(255, 143, 171, .95)); }
 .city { position: relative; display: grid; gap: 2px; justify-items: start; padding-top: 6px; min-width: 0; }
 .city.r { justify-items: end; text-align: right; }
@@ -752,8 +752,8 @@ button.cell:hover { transform: scale(1.1); }
 
 /* ---------- Photos de profil (accueil) ---------- */
 .city .face {
-  width: 58px; height: 58px; aspect-ratio: 1; border-radius: 50%; padding: 0; position: relative; flex: none;
-  display: grid; place-items: center; margin-bottom: 6px; overflow: visible; color: var(--moon);
+  width: clamp(52px, 15vw, 64px); aspect-ratio: 1; border-radius: 50%; padding: 0; position: relative; z-index: 2; flex: none;
+  display: grid; place-items: center; margin-top: clamp(-38px, -9vw, -28px); margin-bottom: 8px; overflow: visible; color: var(--moon);
   background: linear-gradient(150deg, rgba(255, 143, 171, .38), rgba(123, 143, 214, .38));
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 10px 26px -12px rgba(0, 0, 0, .85);
 }
