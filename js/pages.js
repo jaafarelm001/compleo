@@ -294,7 +294,7 @@ function homePage(el) {
   async function uploadAvatar(f) {
     if (!isOnline()) { toast('Il faut du réseau pour envoyer une photo.', { error: true }); return; }
     let blob;
-    try { blob = await shrinkImage(f, 256); } catch { toast('Ce format de photo n\'est pas pris en charge.', { error: true }); return; }
+    try { blob = await shrinkImage(f, 1080, 0.92); } catch { toast('Ce format de photo n\'est pas pris en charge.', { error: true }); return; }
     const path = `${me.id}/avatar.jpg`;
     try {
       try { await sb.storage.from('memories').remove([path]); } catch {}
@@ -1484,7 +1484,7 @@ async function signUrls(paths) {
   }
   return (p) => signed.get(p)?.url || null;
 }
-async function shrinkImage(file, max = 1600) {
+async function shrinkImage(file, max = 1600, quality = 0.85) {
   let src;
   try { src = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
   catch {
@@ -1493,8 +1493,8 @@ async function shrinkImage(file, max = 1600) {
   const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
   const k = Math.min(1, max / Math.max(w, h));
   const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
-  cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
-  return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('format'))), 'image/jpeg', 0.85));
+  const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(src, 0, 0, cv.width, cv.height);
+  return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('format'))), 'image/jpeg', quality));
 }
 function memoriesPage(el) {
   const me = S.me;
