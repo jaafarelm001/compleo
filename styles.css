@@ -752,13 +752,14 @@ button.cell:hover { transform: scale(1.1); }
 
 /* ---------- Photos de profil (accueil) ---------- */
 .city .face {
-  width: clamp(52px, 15vw, 64px); aspect-ratio: 1; border-radius: 50%; padding: 0; position: relative; z-index: 2; flex: none;
+  width: clamp(52px, 15vw, 64px); aspect-ratio: 1 / 1; border-radius: 50%; padding: 0; position: relative; z-index: 2; flex: none;
   display: grid; place-items: center; margin-top: clamp(-38px, -9vw, -28px); margin-bottom: 8px; overflow: visible; color: var(--moon);
   background: linear-gradient(150deg, rgba(255, 143, 171, .38), rgba(123, 143, 214, .38));
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 10px 26px -12px rgba(0, 0, 0, .85);
 }
-.city .face::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .35), inset 0 0 0 1px rgba(255, 255, 255, .25); pointer-events: none; }
-.city .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.city .face::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .35), inset 0 0 0 1px rgba(255, 255, 255, .25); pointer-events: none; z-index: 1; }
+/* image en position absolue : le cercle reste carré quelle que soit la forme de la photo */
+.city .face img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center; display: block; }
 .city .face .ini { font: 600 24px/1 var(--serif); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
 .city .face.has { background: none; }
 .city .face.own, .city .face.has { cursor: pointer; }
