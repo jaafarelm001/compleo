@@ -250,7 +250,8 @@ function homePage(el) {
     } catch (e) { toastError(normalize(e)); }
   }
 
-  // --- Photos de profil (petites, sur l'accueil) ---
+  // --- Photos de profil : petites sur l'accueil, agrandissables au clic ---
+  const faceUrls = {};
   async function syncFaces() {
     const d = homeData();
     const paths = [d.me, d.partner].filter((x) => x && x.avatar_path).map((x) => x.avatar_path);
@@ -262,26 +263,34 @@ function homePage(el) {
       const face = $(`[data-face-of="${n}"]`, el); if (!face) continue;
       const img = $('img', face), ini = $('.ini', face);
       const u = livePerson(n).avatar_path ? urls[livePerson(n).avatar_path] : null;
+      faceUrls[n] = u || null;
       if (u) { img.src = u; img.hidden = false; if (ini) ini.hidden = true; face.classList.add('has'); }
       else { img.hidden = true; img.removeAttribute('src'); if (ini) ini.hidden = false; face.classList.remove('has'); }
     }
   }
-  const faceBtn = $('#h-face', el);
-  if (faceBtn) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.hidden = true; el.appendChild(fileInput);
-    faceBtn.addEventListener('click', () => {
-      const has = !!livePerson(me.name).avatar_path;
-      const o = overlay(`<div class="card sheet face-sheet"><div class="card-head"><h2>Ma photo</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
-        <p class="muted small">Une petite photo qu'${pn} verra à côté de ton prénom. En ajouter une nouvelle remplace l'ancienne.</p>
-        <div class="row" style="margin-top:12px"><button type="button" class="btn" id="fa-pick">${has ? 'Changer la photo' : 'Ajouter une photo'}</button>${has ? '<button type="button" class="btn ghost" id="fa-del">Retirer</button>' : ''}</div></div>`);
-      $('[data-close]', o.el).addEventListener('click', () => o.close());
-      $('#fa-pick', o.el).addEventListener('click', () => { o.close(); fileInput.click(); });
-      const del = $('#fa-del', o.el);
-      if (del) del.addEventListener('click', async () => { o.close(); await removeAvatar(); });
-    });
-    fileInput.addEventListener('change', async () => { const f = fileInput.files[0]; fileInput.value = ''; if (f) await uploadAvatar(f); });
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.hidden = true; el.appendChild(fileInput);
+  fileInput.addEventListener('change', async () => { const f = fileInput.files[0]; fileInput.value = ''; if (f) await uploadAvatar(f); });
+
+  // vue agrandie : ma photo (avec changer/retirer) ou celle de l'autre
+  function openFaceView(name) {
+    const own = name === me.name, url = faceUrls[name];
+    if (!url && !own) { toast(`${esc(name)} n'a pas encore ajouté de photo`); return; }
+    const o = overlay(`<div class="face-view">
+      ${url ? `<img src="${url}" alt="Photo de ${esc(name)}" class="face-big">` : `<div class="face-big ph"><span>${esc(name.charAt(0))}</span></div>`}
+      <p class="face-name">${esc(name)}${own ? ' <span class="faint">(toi)</span>' : ''}</p>
+      ${own ? `<div class="row face-actions"><button type="button" class="btn" id="fv-change">${url ? 'Changer la photo' : 'Ajouter une photo'}</button>${url ? '<button type="button" class="btn ghost" id="fv-del">Retirer</button>' : ''}</div>` : ''}
+      <button type="button" class="face-close" data-close aria-label="Fermer">✕</button>
+    </div>`, { className: 'face-ov' });
+    $('[data-close]', o.el).addEventListener('click', () => o.close());
+    const ch = $('#fv-change', o.el); if (ch) ch.addEventListener('click', () => { o.close(); fileInput.click(); });
+    const del = $('#fv-del', o.el); if (del) del.addEventListener('click', async () => { o.close(); await removeAvatar(); });
   }
+  const faceBtn = $('#h-face', el);
+  if (faceBtn) faceBtn.addEventListener('click', () => openFaceView(me.name));
+  const partnerFace = $(`[data-face-of="${pn}"]`, el);
+  if (partnerFace) { partnerFace.style.cursor = 'pointer'; partnerFace.addEventListener('click', () => openFaceView(pn)); }
   async function uploadAvatar(f) {
     if (!isOnline()) { toast('Il faut du réseau pour envoyer une photo.', { error: true }); return; }
     let blob;

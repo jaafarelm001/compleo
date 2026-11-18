@@ -752,22 +752,41 @@ button.cell:hover { transform: scale(1.1); }
 
 /* ---------- Photos de profil (accueil) ---------- */
 .city .face {
-  width: 52px; height: 52px; border-radius: 50%; padding: 0; position: relative; overflow: visible;
-  display: grid; place-items: center; margin-bottom: 4px; border: 2px solid rgba(255, 255, 255, .18);
-  background: linear-gradient(150deg, rgba(255,143,171,.3), rgba(123,143,214,.3)); color: var(--moon);
-  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, .8);
+  width: 58px; height: 58px; aspect-ratio: 1; border-radius: 50%; padding: 0; position: relative; flex: none;
+  display: grid; place-items: center; margin-bottom: 6px; overflow: visible; color: var(--moon);
+  background: linear-gradient(150deg, rgba(255, 143, 171, .38), rgba(123, 143, 214, .38));
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 10px 26px -12px rgba(0, 0, 0, .85);
 }
-.city .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.city .face .ini { font: 600 22px/1 var(--serif); }
-.city .face.own { cursor: pointer; transition: transform .15s var(--spring), border-color .2s; }
-.city .face.own:hover { border-color: rgba(255, 143, 171, .6); }
-.city .face.own:active { transform: scale(.94); }
+.city .face::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .35), inset 0 0 0 1px rgba(255, 255, 255, .25); pointer-events: none; }
+.city .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.city .face .ini { font: 600 24px/1 var(--serif); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
+.city .face.has { background: none; }
+.city .face.own, .city .face.has { cursor: pointer; }
+.city .face.own { transition: transform .15s var(--spring), box-shadow .25s; }
+.city .face.own:hover { box-shadow: 0 0 0 2px rgba(255, 143, 171, .75), 0 12px 28px -12px rgba(0, 0, 0, .85); }
+.city .face.own:active, .city .face.has:active { transform: scale(.93); }
 .city .face .face-edit {
-  position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; border-radius: 50%;
-  display: grid; place-items: center; font-size: 11px; background: var(--rose); color: #2a0f1a;
-  border: 2px solid var(--bg, #0a0622); box-shadow: 0 2px 6px rgba(0,0,0,.5);
+  position: absolute; right: -2px; bottom: -2px; width: 23px; height: 23px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 11px; background: linear-gradient(145deg, #ff9db6, #e8577e); color: #fff;
+  border: 2px solid #120b2e; box-shadow: 0 2px 7px rgba(0, 0, 0, .55);
 }
 .city.r .face { justify-self: end; }
+
+/* vue agrandie de la photo */
+.overlay.face-ov { padding: 0; }
+.face-view { display: grid; justify-items: center; gap: 16px; text-align: center; padding: 24px; animation: rise .35s var(--spring); }
+.face-big {
+  width: min(78vw, 400px); height: min(78vw, 400px); border-radius: 50%; object-fit: cover; display: block;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .16), 0 30px 80px -28px rgba(0, 0, 0, .95);
+}
+.face-big.ph { display: grid; place-items: center; background: linear-gradient(150deg, rgba(255, 143, 171, .45), rgba(123, 143, 214, .45)); font: 600 clamp(70px, 22vw, 120px)/1 var(--serif); color: var(--moon); }
+.face-name { font: 600 21px/1 var(--serif); }
+.face-actions { justify-content: center; gap: 10px; }
+.face-close {
+  position: fixed; top: calc(16px + var(--safe-t, 0px)); right: 16px; width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0, 0, 0, .45); border: 1px solid rgba(255, 255, 255, .25); color: #fff; font-size: 17px; cursor: pointer;
+  display: grid; place-items: center; backdrop-filter: blur(6px);
+}
 
 /* ---------- Cœur sur un compliment ---------- */
 .love-btn {
