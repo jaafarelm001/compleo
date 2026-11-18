@@ -749,3 +749,34 @@ button.cell:hover { transform: scale(1.1); }
 .cc-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: var(--r-sm); background: rgba(255, 77, 94, .07); border: 1px solid var(--line); font-size: 14.5px; }
 .cc-del { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: rgba(10, 6, 34, .3); color: var(--muted); font-size: 14px; flex: none; }
 .cc-del:hover { border-color: var(--rose-deep); color: var(--rose); }
+
+/* ---------- Photos de profil (accueil) ---------- */
+.city .face {
+  width: 52px; height: 52px; border-radius: 50%; padding: 0; position: relative; overflow: visible;
+  display: grid; place-items: center; margin-bottom: 4px; border: 2px solid rgba(255, 255, 255, .18);
+  background: linear-gradient(150deg, rgba(255,143,171,.3), rgba(123,143,214,.3)); color: var(--moon);
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, .8);
+}
+.city .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.city .face .ini { font: 600 22px/1 var(--serif); }
+.city .face.own { cursor: pointer; transition: transform .15s var(--spring), border-color .2s; }
+.city .face.own:hover { border-color: rgba(255, 143, 171, .6); }
+.city .face.own:active { transform: scale(.94); }
+.city .face .face-edit {
+  position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 11px; background: var(--rose); color: #2a0f1a;
+  border: 2px solid var(--bg, #0a0622); box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.city.r .face { justify-self: end; }
+
+/* ---------- Cœur sur un compliment ---------- */
+.love-btn {
+  position: absolute; right: 14px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid rgba(196, 59, 103, .3); background: rgba(255, 255, 255, .55); color: #d26; font-size: 20px; line-height: 1;
+  display: grid; place-items: center; cursor: pointer; transition: transform .15s var(--spring), background .2s, color .2s;
+}
+.love-btn:hover { background: #fff; }
+.love-btn:active { transform: scale(.85); }
+.love-btn.on { background: #e8577e; color: #fff; border-color: transparent; box-shadow: 0 6px 16px -6px rgba(232, 87, 126, .9); animation: lovePop .4s var(--spring); }
+@keyframes lovePop { 0% { transform: scale(.6); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.pill.love { background: rgba(232, 87, 126, .18); border-color: rgba(232, 87, 126, .4); color: var(--rose); }

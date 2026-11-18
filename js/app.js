@@ -390,8 +390,8 @@ function onDbChange(table, p) {
   if (table === 'profiles') {   // « vu à » + lieu/fuseau du partenaire
     if (pid && row.id === pid && S.home && S.home.partner) {
       S.home.partner.last_seen_at = row.last_seen_at;
-      const moved = S.home.partner.place !== row.place || S.home.partner.tz !== row.tz;
-      S.home.partner.place = row.place; S.home.partner.tz = row.tz;
+      const moved = S.home.partner.place !== row.place || S.home.partner.tz !== row.tz || S.home.partner.avatar_path !== row.avatar_path;
+      S.home.partner.place = row.place; S.home.partner.tz = row.tz; S.home.partner.avatar_path = row.avatar_path;
       renderPresence();
       if (moved) { cache.set('home', S.home); if (current && current.name === 'accueil') refreshPage(); }
     }

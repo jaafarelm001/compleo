@@ -129,8 +129,7 @@ function homePage(el) {
   const liveTz = (n) => livePerson(n).tz || personInfo(n).tz || 'Europe/Paris';
   const livePlace = (n) => livePerson(n).place || personInfo(n).city || '';
   const PLACES = [['🇲🇦', 'Maroc', 'Africa/Casablanca'], ['🇫🇷', 'France', 'Europe/Paris'], ['✈️', 'En avion', null], ['✏️', 'Autre…', '_custom']];
-  const left = me.name === 'Jaafar' ? me.name : pn;   // Casablanca à gauche, France à droite
-  const right = left === 'Jaafar' ? 'Audrey' : 'Jaafar';
+  const left = me.name, right = pn;   // chacun se voit en premier (à gauche)
   el.innerHTML = `
     <section class="grid home">
       <article class="card hero span-6" id="h-hero">
@@ -144,6 +143,9 @@ function homePage(el) {
           </svg>
           ${[left, right].map((n, i) => `
             <div class="city ${i ? 'r' : ''}" data-person="${n}">
+              ${n === me.name
+                ? `<button type="button" class="face own" id="h-face" data-face-of="${n}" aria-label="Changer ma photo"><img alt="" hidden><span class="ini">${esc(n.charAt(0))}</span><span class="face-edit" aria-hidden="true">✎</span></button>`
+                : `<span class="face" data-face-of="${n}"><img alt="Photo de ${esc(n)}" hidden><span class="ini">${esc(n.charAt(0))}</span></span>`}
               <span class="clock" data-clock="${esc(liveTz(n))}">--:--</span>
               <span class="nm">${esc(n)}${n === me.name ? ' <span class="faint small">(toi)</span>' : ''}</span>
               ${n === me.name
@@ -247,6 +249,62 @@ function homePage(el) {
       hooks.loadHome();
     } catch (e) { toastError(normalize(e)); }
   }
+
+  // --- Photos de profil (petites, sur l'accueil) ---
+  async function syncFaces() {
+    const d = homeData();
+    const paths = [d.me, d.partner].filter((x) => x && x.avatar_path).map((x) => x.avatar_path);
+    const urls = {};
+    if (paths.length && isOnline()) {
+      try { (await q(sb.storage.from('memories').createSignedUrls(paths, 3600)) || []).forEach((r) => { if (r && r.signedUrl) urls[r.path] = r.signedUrl; }); } catch {}
+    }
+    for (const n of ['Jaafar', 'Audrey']) {
+      const face = $(`[data-face-of="${n}"]`, el); if (!face) continue;
+      const img = $('img', face), ini = $('.ini', face);
+      const u = livePerson(n).avatar_path ? urls[livePerson(n).avatar_path] : null;
+      if (u) { img.src = u; img.hidden = false; if (ini) ini.hidden = true; face.classList.add('has'); }
+      else { img.hidden = true; img.removeAttribute('src'); if (ini) ini.hidden = false; face.classList.remove('has'); }
+    }
+  }
+  const faceBtn = $('#h-face', el);
+  if (faceBtn) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.hidden = true; el.appendChild(fileInput);
+    faceBtn.addEventListener('click', () => {
+      const has = !!livePerson(me.name).avatar_path;
+      const o = overlay(`<div class="card sheet face-sheet"><div class="card-head"><h2>Ma photo</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+        <p class="muted small">Une petite photo qu'${pn} verra à côté de ton prénom. En ajouter une nouvelle remplace l'ancienne.</p>
+        <div class="row" style="margin-top:12px"><button type="button" class="btn" id="fa-pick">${has ? 'Changer la photo' : 'Ajouter une photo'}</button>${has ? '<button type="button" class="btn ghost" id="fa-del">Retirer</button>' : ''}</div></div>`);
+      $('[data-close]', o.el).addEventListener('click', () => o.close());
+      $('#fa-pick', o.el).addEventListener('click', () => { o.close(); fileInput.click(); });
+      const del = $('#fa-del', o.el);
+      if (del) del.addEventListener('click', async () => { o.close(); await removeAvatar(); });
+    });
+    fileInput.addEventListener('change', async () => { const f = fileInput.files[0]; fileInput.value = ''; if (f) await uploadAvatar(f); });
+  }
+  async function uploadAvatar(f) {
+    if (!isOnline()) { toast('Il faut du réseau pour envoyer une photo.', { error: true }); return; }
+    let blob;
+    try { blob = await shrinkImage(f, 256); } catch { toast('Ce format de photo n\'est pas pris en charge.', { error: true }); return; }
+    const path = `${me.id}/avatar.jpg`;
+    try {
+      try { await sb.storage.from('memories').remove([path]); } catch {}
+      await q(sb.storage.from('memories').upload(path, blob, { contentType: 'image/jpeg', upsert: false, cacheControl: '0' }));
+      await send({ type: 'rpc', name: 'set_my_avatar', args: { p_path: path } });
+      if (S.home && S.home.me) { S.home.me.avatar_path = path; cache.set('home', S.home); }
+      buzz(12); burstFrom(faceBtn, { emojis: ['📸', '💗', '✨'], n: 12 }); toast('Photo mise à jour 📸');
+      syncFaces();
+    } catch (e) { toastError(normalize(e)); }
+  }
+  async function removeAvatar() {
+    try {
+      await send({ type: 'rpc', name: 'set_my_avatar', args: { p_path: null } });
+      try { await sb.storage.from('memories').remove([`${me.id}/avatar.jpg`]); } catch {}
+      if (S.home && S.home.me) { S.home.me.avatar_path = null; cache.set('home', S.home); }
+      toast('Photo retirée'); syncFaces();
+    } catch (e) { toastError(normalize(e)); }
+  }
+
   $('#g-all', el).addEventListener('click', () => openGestureSheet());
   function openGestureSheet(tab = 'tendre') {
     const o = overlay(`<div class="card sheet gest-sheet">
@@ -282,7 +340,7 @@ function homePage(el) {
     // sous-titre
     $('#h-sub', el).textContent = 'Le même ciel au-dessus de nous deux.';
     // moods sur la carte des villes
-    syncPlaces();
+    syncPlaces(); syncFaces();
     for (const n of ['Jaafar', 'Audrey']) {
       const m = n === me.name ? d.moods && d.moods.me : d.moods && d.moods.partner;
       const box = $(`[data-mood-of="${n}"]`, el);
@@ -562,7 +620,7 @@ function ruleText(c, queueIndex) {
     default: return 'Manuel';
   }
 }
-const COMPL_COLS = 'id,content,unlock_rule,unlock_at,rule_moods,position,unlocked_at,seen_by_recipient_at,created_at,updated_at';
+const COMPL_COLS = 'id,content,unlock_rule,unlock_at,rule_moods,position,unlocked_at,seen_by_recipient_at,loved_at,created_at,updated_at';
 
 function flipCard(c, { flipped, tappable, from = 'Audrey', at = c.unlocked_at }) {
   return `<div class="flip ${flipped ? 'flipped' : ''}" data-id="${esc(c.id)}" ${tappable ? 'role="button" tabindex="0" aria-label="Ouvrir ce compliment"' : ''}>
@@ -570,7 +628,8 @@ function flipCard(c, { flipped, tappable, from = 'Audrey', at = c.unlocked_at })
       <div class="flip-sizer">${esc(c.content)}</div><div class="meta">x</div>
       <div class="flip-face flip-front"><div class="seal">💌</div><b class="serif" style="font-size:19px">Nouveau compliment</b><span class="muted small">Touche pour l'ouvrir</span></div>
       <div class="flip-face flip-back"><q>${esc(c.content)}</q>
-        <div class="meta"><span>De ${esc(from)}</span><span>${esc(at ? ago(at) : '')}</span></div></div>
+        <div class="meta"><span>De ${esc(from)}</span><span>${esc(at ? ago(at) : '')}</span></div>
+        <button type="button" class="love-btn ${c.loved_at ? 'on' : ''}" data-love="${esc(c.id)}" aria-pressed="${!!c.loved_at}" aria-label="${c.loved_at ? 'Retirer le cœur' : 'Mettre un cœur'}">♥</button></div>
     </div></div>`;
 }
 
@@ -729,6 +788,19 @@ function complimentsPage(el) {
 
   /* ----- Reçus d'Audrey ----- */
   let flipping = false;
+  function wireLove(box) {
+    $$('[data-love]', box).forEach((b) => b.addEventListener('click', async (ev) => {
+      ev.stopPropagation(); ev.preventDefault();
+      const id = b.dataset.love, on = !b.classList.contains('on');
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+      if (on) { burstFrom(b, { emojis: ['❤️', '💗', '💞'], n: 12 }); buzz(12); }
+      try {
+        await send({ type: 'rpc', name: 'set_compliment_love', args: { p_id: id, p_loved: on } });
+        const l = (cache.get('compliments') || []).map((x) => (x.id === id ? { ...x, loved_at: on ? new Date().toISOString() : null } : x));
+        cache.set('compliments', l);
+      } catch (e) { b.classList.toggle('on', !on); b.setAttribute('aria-pressed', String(!on)); toastError(normalize(e)); }
+    }));
+  }
   function render(list) {
     const c = homeData().compliments || {};
     $('#cp-n', el).textContent = list.length;
@@ -737,6 +809,7 @@ function complimentsPage(el) {
     const box = $('#cp-list', el);
     if (!list.length) { box.innerHTML = `<div class="card soft" style="grid-column:1/-1">${emptyState('🕊️', 'Audrey prépare quelque chose… Ton premier compliment apparaîtra ici.')}</div>`; return; }
     box.innerHTML = list.map((x) => flipCard(x, { flipped: !!x.seen_by_recipient_at || flipping === 'done', tappable: !x.seen_by_recipient_at })).join('');
+    wireLove(box);
     if (flipping) return;
     flipping = flipSequence(box, async () => {
       flipping = 'done';
@@ -984,7 +1057,7 @@ function complimentsAdmin(el) {
     box.innerHTML = list.map((c) => {
       const qi = daily.indexOf(c);
       const status = c.unlocked_at
-        ? `<span class="pill ok">Débloqué ${esc(ago(c.unlocked_at))}</span>${c.seen_by_recipient_at ? `<span class="pill">Vu par Jaafar ${esc(ago(c.seen_by_recipient_at))}</span>` : '<span class="pill">Pas encore vu</span>'}`
+        ? `<span class="pill ok">Débloqué ${esc(ago(c.unlocked_at))}</span>${c.seen_by_recipient_at ? `<span class="pill">Vu par Jaafar ${esc(ago(c.seen_by_recipient_at))}</span>` : '<span class="pill">Pas encore vu</span>'}${c.loved_at ? '<span class="pill love">❤️ Aimé</span>' : ''}`
         : '<span class="pill lock">Scellé</span>';
       return `<div class="mitem" data-id="${esc(c.id)}">
         <p class="txt">« ${esc(c.content)} »</p>
