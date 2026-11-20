@@ -800,3 +800,45 @@ button.cell:hover { transform: scale(1.1); }
 .love-btn.on { background: #e8577e; color: #fff; border-color: transparent; box-shadow: 0 6px 16px -6px rgba(232, 87, 126, .9); animation: lovePop .4s var(--spring); }
 @keyframes lovePop { 0% { transform: scale(.6); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .pill.love { background: rgba(232, 87, 126, .18); border-color: rgba(232, 87, 126, .4); color: var(--rose); }
+
+/* ---------- Cloche + centre de notifications ---------- */
+.icon-btn.bell { position: relative; }
+.icon-btn.bell.has { color: var(--rose); }
+.nbadge {
+  position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px;
+  background: var(--rose-deep, #e8577e); color: #fff; font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+  border: 2px solid var(--bg, #0a0622); box-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+}
+.notif-sheet { width: min(460px, 100%); max-height: 80vh; display: flex; flex-direction: column; }
+.notif-list { overflow-y: auto; display: grid; gap: 6px; margin: 4px -4px 0; padding: 0 4px 4px; }
+.notif-item {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 11px 12px; border-radius: var(--r-md); background: rgba(10, 6, 34, .3); border: 1px solid var(--line); color: var(--moon);
+  transition: background .2s, border-color .2s; cursor: pointer;
+}
+.notif-item:hover { border-color: rgba(255, 143, 171, .4); }
+.notif-item.unread { background: rgba(255, 143, 171, .12); border-color: rgba(255, 143, 171, .3); }
+.ni-ic { font-size: 24px; text-align: center; }
+.ni-tx { min-width: 0; display: grid; gap: 1px; }
+.ni-tx b { font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.ni-tx span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ni-tx time { font-size: 11.5px; color: var(--faint); }
+.ni-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--rose); flex: none; }
+.notif-empty { text-align: center; padding: 30px 16px; color: var(--muted); }
+.notif-empty span { font-size: 40px; display: block; margin-bottom: 10px; opacity: .8; }
+.notif-empty p { font-size: 14px; line-height: 1.5; }
+
+/* ---------- Gestes reçus (liste) + historique ---------- */
+.hug-list { display: grid; gap: 6px; margin: 4px 0 14px; max-height: 40vh; overflow-y: auto; width: 100%; }
+.hug-row { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 12px; border-radius: var(--r-sm); background: rgba(255, 255, 255, .06); text-align: left; }
+.hug-row .e { font-size: 20px; text-align: center; }
+.hug-row .t { font-size: 14px; overflow-wrap: anywhere; }
+.hug-hist { display: grid; gap: 7px; max-height: 64vh; overflow-y: auto; }
+.hug-hrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--r-sm); background: rgba(10, 6, 34, .3); border: 1px solid var(--line); }
+.hug-hrow.me { background: rgba(255, 143, 171, .1); }
+.hug-hrow.clash { background: rgba(255, 77, 94, .08); }
+.hug-hrow .e { font-size: 22px; text-align: center; }
+.hug-hrow .t { min-width: 0; display: grid; gap: 1px; }
+.hug-hrow .t b { font-size: 13px; font-weight: 600; }
+.hug-hrow .t span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hug-hrow time { font-size: 11.5px; color: var(--faint); white-space: nowrap; }

@@ -163,7 +163,7 @@ function homePage(el) {
       </article>
 
       <article class="card span-3 gest-card">
-        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" id="g-all">Tout voir</button></div>
+        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><div class="row" style="gap:10px"><button type="button" class="link-btn" id="g-hist">Historique</button><button type="button" class="link-btn" id="g-all">Tout voir</button></div></div>
         <div class="gest-row" id="g-fav"></div>
       </article>
 
@@ -315,6 +315,22 @@ function homePage(el) {
   }
 
   $('#g-all', el).addEventListener('click', () => openGestureSheet());
+  $('#g-hist', el).addEventListener('click', () => openGestureHistory());
+  async function openGestureHistory() {
+    const o = overlay(`<div class="card sheet gest-sheet"><div class="card-head"><h2>Historique des gestes</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+      <div class="hug-hist" id="gh-list">${skeleton(4, 52)}</div></div>`);
+    $('[data-close]', o.el).addEventListener('click', () => o.close());
+    try {
+      const rows = await q(sb.from('hugs').select('id,from_id,to_id,kind,tone,emoji,label,created_at').order('created_at', { ascending: false }).limit(50));
+      if (!o.el.isConnected) return;
+      $('#gh-list', o.el).innerHTML = (rows && rows.length) ? rows.map((h) => {
+        const mine = h.from_id === me.id, other = mine ? pn : me.name, v = hugView(h, other);
+        return `<div class="hug-hrow ${mine ? 'me' : ''} ${h.tone === 'clash' ? 'clash' : ''}"><span class="e">${v.e}</span>
+          <span class="t"><b>${mine ? 'Toi → ' + esc(pn) : esc(pn) + ' → toi'}</b><span>${esc(h.kind === 'custom' ? (h.label || '') : gestureLabel(gestureOf(h.kind), mine ? me.name : pn))}</span></span>
+          <time>${esc(ago(h.created_at))}</time></div>`;
+      }).join('') : emptyState('💌', 'Aucun geste pour l\'instant.');
+    } catch { if (o.el.isConnected) $('#gh-list', o.el).innerHTML = '<p class="muted small">Historique indisponible sans réseau.</p>'; }
+  }
   function openGestureSheet(tab = 'tendre') {
     const o = overlay(`<div class="card sheet gest-sheet">
       <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>

@@ -1,7 +1,7 @@
 /* Jaafar ♥ Audrey — coque de l'appli : connexion, navigation, temps réel, présence, surprises. */
-import { $, $$, esc, sb, hasSdk, q, cache, store, outbox, send, uuid, normalize, isOnline, log, net, PEOPLE, VERSION, loadCustomGestures } from './core.js';
+import { $, $$, esc, sb, hasSdk, q, cache, store, outbox, send, uuid, normalize, isOnline, log, net, PEOPLE, VERSION, loadCustomGestures, loadNotifications, notifList, notifUnread, markNotifsRead, clearNotifs } from './core.js';
 import { S, hooks, isJaafar, partnerName } from './state.js';
-import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, gestureTone, hugView, TENDRE, CLASHS, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
+import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, gestureTone, hugView, notifView, notifRoute, TENDRE, CLASHS, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
 import { HEART, startSky, burstFrom, heartRain, confetti, fireworks, buzz, reduced } from './fx.js';
 import { PAGES, fillGestureList } from './pages.js';
 
@@ -245,6 +245,7 @@ function renderShell() {
         <button type="button" class="brand" id="brand" aria-label="Jaafar et Audrey">${HEART}<span>J &amp; A</span></button>
         <span class="spacer"></span>
         <span class="presence" id="presence" title="Présence"><i class="dot"></i><span>${esc(partnerName())}</span></span>
+        <button type="button" class="icon-btn bell" id="bell" aria-label="Notifications">${ICON.bell}<span class="nbadge" id="nbadge" hidden></span></button>
         <a class="icon-btn" href="#/reglages" aria-label="Réglages">${ICON.gear}</a>
       </header>
       <nav class="tabbar" aria-label="Navigation principale">
@@ -256,7 +257,8 @@ function renderShell() {
       </main>
     </div>`;
   setupEasterEggs();
-  renderPresence(); renderNet(); setBadges();
+  renderPresence(); renderNet(); setBadges(); setNotifBadge();
+  const bell = $('#bell', root); if (bell) bell.addEventListener('click', openNotifications);
 }
 
 function parseRoute() {
@@ -328,6 +330,7 @@ async function loadHome() {
         notify('Nouveau compliment 💌', 'Audrey a débloqué un compliment pour toi.');
       }
       loadCustomGestures().then(() => { if (current && ['accueil', 'clashs'].includes(current.name)) refreshPage(); });
+      refreshNotifs();
       if (Array.isArray(d.unseen_hugs) && d.unseen_hugs.length) showHug(d.unseen_hugs);
       announceQuestion(d.question);
       if (current && ['accueil', 'nous', 'question', 'reglages', 'compliments'].includes(current.name)) refreshPage();
@@ -355,7 +358,7 @@ async function handleAuthLost() {
 /* =====================================================================
    Temps réel + présence
    ===================================================================== */
-const TABLES = ['moods', 'compliments', 'jaafar_compliments', 'compliment_rules', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles', 'custom_gestures'];
+const TABLES = ['moods', 'compliments', 'jaafar_compliments', 'compliment_rules', 'answers', 'notes', 'hugs', 'music', 'letters', 'memories', 'couple_settings', 'profiles', 'custom_gestures', 'notifications'];
 function startRealtime() {
   if (rtChannel || !S.me) return;
   try {
@@ -395,6 +398,10 @@ function onDbChange(table, p) {
       renderPresence();
       if (moved) { cache.set('home', S.home); if (current && current.name === 'accueil') refreshPage(); }
     }
+    return;
+  }
+  if (table === 'notifications') {
+    if (p.eventType === 'INSERT' && row.user_id === S.me.id) { cache.set('notifs', [row, ...notifList().filter((n) => n.id !== row.id)].slice(0, 60)); setNotifBadge(); }
     return;
   }
   if (table === 'custom_gestures') { loadCustomGestures().then(() => { if (current && ['accueil', 'clashs'].includes(current.name)) refreshPage(); }); return; }
@@ -489,6 +496,45 @@ function setBadges() {
 hooks.setBadges = setBadges;
 
 /* =====================================================================
+   Centre de notifications (cloche, lu / non-lu)
+   ===================================================================== */
+function setNotifBadge() {
+  const b = $('#nbadge'); if (!b) return;
+  const n = notifUnread();
+  b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n || '');
+  const bell = $('#bell'); if (bell) bell.classList.toggle('has', !!n);
+}
+hooks.setNotifBadge = setNotifBadge;
+
+function openNotifications() {
+  const list = notifList();
+  const row = (n) => {
+    const v = notifView(n);
+    return `<button type="button" class="notif-item ${n.read_at ? '' : 'unread'}" data-id="${esc(n.id)}" data-type="${esc(n.type)}">
+      <span class="ni-ic">${v.icon}</span>
+      <span class="ni-tx"><b>${esc(v.title)}</b>${v.body ? `<span>${esc(v.body)}</span>` : ''}<time>${esc(v.time)}</time></span>
+      ${n.read_at ? '' : '<i class="ni-dot" aria-label="non lu"></i>'}
+    </button>`;
+  };
+  const o = overlay(`<div class="card sheet notif-sheet">
+    <div class="card-head"><h2>Notifications</h2><div class="row" style="gap:8px">${list.length ? '<button type="button" class="link-btn" id="n-clear">Tout effacer</button>' : ''}<button type="button" class="link-btn" data-close>Fermer</button></div></div>
+    <div class="notif-list" id="n-list">${list.length ? list.map(row).join('') : emptyNotif()}</div>
+  </div>`);
+  $('[data-close]', o.el).addEventListener('click', () => o.close());
+  const clearBtn = $('#n-clear', o.el);
+  if (clearBtn) clearBtn.addEventListener('click', async () => { try { await clearNotifs(); } catch {} setNotifBadge(); o.close(); });
+  $$('.notif-item', o.el).forEach((b) => b.addEventListener('click', () => {
+    const n = notifList().find((x) => x.id === b.dataset.id);
+    o.close(); if (n) hooks.navigate(notifRoute(n));
+  }));
+  // tout marquer lu à l'ouverture
+  if (notifUnread()) { markNotifsRead().catch(() => {}); setNotifBadge(); }
+}
+function emptyNotif() { return '<div class="notif-empty"><span>🔔</span><p>Aucune notification pour l\'instant.<br>Les petites attentions de ' + esc(partnerName()) + ' apparaîtront ici.</p></div>'; }
+
+async function refreshNotifs() { try { await loadNotifications(); setNotifBadge(); } catch {} }
+
+/* =====================================================================
    Notifications système (quand l'appli est en arrière-plan)
    ===================================================================== */
 function notify(title, body, force) {
@@ -542,8 +588,11 @@ function renderHug(list, done) {
     : `${back ? `<button type="button" class="btn" data-back style="margin-top:10px">Renvoyer ${back.e} ${esc(gestureLabel(back, S.me.name))}</button>` : ''}
        <button type="button" class="btn ${back ? 'ghost' : ''}" data-counter="tendre" ${back ? '' : 'style="margin-top:10px"'}>Répondre…</button>
        <button type="button" class="link-btn" data-close>Fermer</button>`;
+  const listHtml = list.length > 1
+    ? `<div class="hug-list">${list.map((h) => { const hv = hugView(h, pn); return `<div class="hug-row"><span class="e">${hv.e}</span><span class="t">${esc(hv.text)}</span></div>`; }).join('')}</div>`
+    : '';
   const o = overlay(`<div class="welcome hug-box ${isClash ? 'clash-box' : ''}" style="max-width:420px"><div class="hug-anim">${em}</div>
-    <p class="big" style="font-size:clamp(30px,8vw,46px)">${esc(txt)}</p>${btns}</div>`,
+    <p class="big" style="font-size:clamp(28px,7vw,42px)">${esc(txt)}</p>${listHtml}${btns}</div>`,
     { onClose: () => { hugOpen = false; done(); } });
   if (isClash) burstFrom($('.hug-anim', o.el), { emojis: ['💢', '😤', em], n: 18 }); else heartRain(30);
 

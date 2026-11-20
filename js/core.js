@@ -222,3 +222,20 @@ export async function loadCustomGestures() {
   } catch (e) { return cache.get('custom') || []; }
 }
 export const customGestures = (tone) => (cache.get('custom') || []).filter((g) => !tone || g.tone === tone);
+
+/* ---------------- Notifications ---------------- */
+export async function loadNotifications(limit = 60) {
+  try {
+    const rows = await q(sb.from('notifications').select('id,actor_id,type,title,body,meta,ref_id,created_at,read_at').order('created_at', { ascending: false }).limit(limit));
+    cache.set('notifs', rows || []);
+    return rows || [];
+  } catch (e) { return cache.get('notifs') || []; }
+}
+export const notifList = () => cache.get('notifs') || [];
+export const notifUnread = () => notifList().filter((n) => !n.read_at).length;
+export function markNotifsRead(ids) {
+  const now = new Date().toISOString();
+  cache.set('notifs', notifList().map((n) => (!n.read_at && (!ids || ids.includes(n.id)) ? { ...n, read_at: now } : n)));
+  return send({ type: 'rpc', name: 'mark_notifications_read', args: { p_ids: ids || null } });
+}
+export function clearNotifs() { cache.set('notifs', []); return send({ type: 'rpc', name: 'clear_notifications', args: {} }); }

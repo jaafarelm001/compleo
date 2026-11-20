@@ -10,6 +10,7 @@ export const ICON = {
   letter: svg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/><path d="M12 17.2s-2.4-1.5-2.4-3a1.2 1.2 0 0 1 2.4-.3 1.2 1.2 0 0 1 2.4.3c0 1.5-2.4 3-2.4 3z" fill="currentColor" stroke="none"/>'),
   question: svg('<path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.4A8.5 8.5 0 1 1 21 12z"/><path d="M9.8 9.5a2.3 2.3 0 0 1 4.4 1c0 1.6-2.2 1.9-2.2 3.2"/><path d="M12 16.6h.01" stroke-width="2.4"/>'),
   sparkle: svg('<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="m6 6 2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
+  bell: svg('<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'),
   gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
   chev: svg('<path d="m9 6 6 6-6 6"/>', 'class="chev"'),
   back: svg('<path d="m15 6-6 6 6 6"/>', 'width="18" height="18"'),
@@ -234,3 +235,26 @@ export const charCounter = (input, max) => {
   input.addEventListener('input', upd); upd();
   input.insertAdjacentElement('afterend', c);
 };
+
+export function notifView(n) {
+  const m = n.meta || {};
+  let icon = '🔔';
+  if (n.type === 'mood') icon = (moodOf(m.mood) || {}).e || '🙂';
+  else if (n.type === 'hug') icon = m.emoji || (gestureOf(m.kind) || {}).e || '🤗';
+  else if (n.type === 'clash') icon = m.emoji || (gestureOf(m.kind) || {}).e || '💢';
+  else if (n.type === 'compliment' || n.type === 'jc') icon = '💌';
+  else if (n.type === 'love') icon = '❤️';
+  else if (n.type === 'note') icon = '📝';
+  else if (n.type === 'memory' || n.type === 'photo') icon = '📸';
+  else if (n.type === 'letter') icon = '✉️';
+  else if (n.type === 'song') icon = '🎶';
+  else if (n.type === 'answer') icon = '💬';
+  else if (n.type === 'place') icon = '📍';
+  return { icon, title: n.title, body: n.body, time: ago(n.created_at) };
+}
+
+// route d'ouverture par type de notification
+export const notifRoute = (n) => ({
+  mood: 'mood', hug: 'accueil', clash: 'clashs', compliment: 'compliments', jc: 'compliments', love: 'compliments',
+  note: 'mots', memory: 'souvenirs', letter: 'capsules', song: 'musique', answer: 'question', photo: 'accueil', place: 'accueil'
+}[n.type] || 'accueil');
