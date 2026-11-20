@@ -157,28 +157,29 @@ function homePage(el) {
       </article>
 
 
+      <div class="sec span-6"><span>Bientôt ensemble</span></div>
+      <article class="card span-6" id="h-count">
+        <div class="card-head"><h2>Prochaines retrouvailles</h2></div>
+        <div id="h-count-body"></div>
+      </article>
+
+      <div class="sec span-6"><span>Aujourd'hui</span></div>
+      <a class="card callout span-6" id="h-q" href="#/question"></a>
+      <a class="card callout span-3" id="h-compl" href="#/compliments" hidden></a>
+      <a class="card callout span-3" id="h-jc" hidden></a>
+      <a class="card callout span-6" id="h-letters" href="#/capsules" hidden></a>
+
       <article class="card span-3">
         <div class="card-head"><h2>Nos moods du jour</h2><a class="link-btn" href="#/mood">Le mien</a></div>
         <div class="mood-pair" id="h-moods"></div>
       </article>
 
       <article class="card span-3 gest-card">
-        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><div class="row" style="gap:10px"><button type="button" class="link-btn" id="g-hist">Historique</button><button type="button" class="link-btn" id="g-all">Tout voir</button></div></div>
+        <div class="card-head"><h2>Un geste pour ${esc(pn)}</h2><div class="row hd-links"><button type="button" class="link-btn" id="g-hist">Historique</button><button type="button" class="link-btn" id="g-all">Tout voir</button></div></div>
         <div class="gest-row" id="g-fav"></div>
       </article>
 
-      <article class="card span-3" id="h-count">
-        <div class="card-head"><h2>Prochaines retrouvailles</h2></div>
-        <div id="h-count-body"></div>
-      </article>
-
-      <a class="card callout span-3" id="h-compl" href="#/compliments" hidden></a>
-      <a class="card callout span-3" id="h-jc" hidden></a>
-      <a class="card callout span-6" id="h-letters" href="#/capsules" hidden></a>
-
-
-      <a class="card callout span-3" id="h-q" href="#/question"></a>
-
+      <div class="sec span-6"><span>Votre histoire</span></div>
       <article class="card span-6">
         <div class="card-head"><h2>Nous en chiffres</h2></div>
         <div class="stats" id="h-stats"></div>

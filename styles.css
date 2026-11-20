@@ -842,3 +842,11 @@ button.cell:hover { transform: scale(1.1); }
 .hug-hrow .t b { font-size: 13px; font-weight: 600; }
 .hug-hrow .t span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hug-hrow time { font-size: 11.5px; color: var(--faint); white-space: nowrap; }
+
+/* ---------- Accueil : structure en sections ---------- */
+.grid.home .sec { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; margin: 10px 2px 2px; }
+.grid.home .sec span { font-size: 11.5px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.grid.home .sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255, 255, 255, .16), transparent); }
+.grid.home .sec:first-of-type { margin-top: 2px; }
+.card-head { flex-wrap: wrap; row-gap: 6px; }
+.hd-links { gap: 14px; }
