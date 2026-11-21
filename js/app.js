@@ -243,7 +243,6 @@ function renderShell() {
     <div class="shell">
       <header class="topbar">
         <button type="button" class="brand" id="brand" aria-label="Jaafar et Audrey">${HEART}<span>J &amp; A</span></button>
-        <span class="spacer"></span>
         <span class="presence" id="presence" title="Présence"><i class="dot"></i><span>${esc(partnerName())}</span></span>
         <button type="button" class="icon-btn bell" id="bell" aria-label="Notifications">${ICON.bell}<span class="nbadge" id="nbadge" hidden></span></button>
         <a class="icon-btn" href="#/reglages" aria-label="Réglages">${ICON.gear}</a>
@@ -441,13 +440,13 @@ function renderPresence() {
   dot.classList.toggle('on', !!S.partnerOnline);
   const seen = S.home && S.home.partner && S.home.partner.last_seen_at;
   let txt;
-  if (S.partnerOnline) txt = `${pn} est en ligne`;
+  if (S.partnerOnline) txt = `${pn} · en ligne`;
   else if (seen) {
     const mins = (Date.now() - new Date(seen).getTime()) / 6e4;
-    txt = mins < 2 ? `${pn} était là à l'instant` : mins < 60 ? `${pn}, vue il y a ${Math.round(mins)} min` : mins < 1440 ? `${pn}, vue il y a ${Math.round(mins / 60)} h` : `${pn}, vue il y a ${Math.round(mins / 1440)} j`;
-    if (pn === 'Jaafar') txt = txt.replace(', vue', ', vu');
+    txt = mins < 2 ? `${pn} · à l'instant` : mins < 60 ? `${pn} · il y a ${Math.round(mins)} min` : mins < 1440 ? `${pn} · il y a ${Math.round(mins / 60)} h` : `${pn} · il y a ${Math.round(mins / 1440)} j`;
   } else txt = pn;
   tx.textContent = txt;
+  el.setAttribute('title', S.partnerOnline ? `${pn} est en ligne` : seen ? `${pn}, dernière connexion : ${new Date(seen).toLocaleString('fr-FR')}` : pn);
   el.title = `${txt}. Il est ${timeIn(PEOPLE[pn]?.tz || 'Europe/Paris')} chez ${pn === 'Audrey' ? 'elle' : 'lui'}.`;
 }
 setInterval(() => { if (S.me && !document.hidden) renderPresence(); }, 30000);

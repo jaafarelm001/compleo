@@ -145,10 +145,11 @@ html, body { max-width: 100%; }
 .brand svg { width: 20px; height: 20px; fill: var(--rose); flex: none; }
 .topbar .spacer { flex: 1; min-width: 4px; }
 .presence {
-  display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; min-width: 0; flex: 0 1 auto;
-  background: var(--glass); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); max-width: 52vw;
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; min-width: 0; flex: 0 1 auto;
+  background: var(--glass); border: 1px solid var(--line); font-size: 13px; color: var(--moon); max-width: 340px; margin-right: auto;
   white-space: nowrap; overflow: hidden;
 }
+.presence .dot { flex: none; }
 .presence > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .topbar .icon-btn { flex: none; }
 

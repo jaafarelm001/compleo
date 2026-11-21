@@ -1,13 +1,14 @@
 /* Service worker : l'appli s'ouvre même hors-ligne. Les données Supabase ne sont jamais mises en cache ici. */
-const VERSION = 'compleo-2.8.2';
+const VERSION = 'compleo-2.8.3';
 const SHELL = [
-  './', './index.html', './404.html', './styles.css?v=2.8.2', './config.js?v=2.8.2', './vendor/supabase.js',
-  './js/app.js?v=2.8.2', './js/core.js', './js/fx.js', './js/ui.js', './js/state.js', './js/pages.js',
+  './', './index.html', './404.html', './styles.css?v=2.8.3', './config.js?v=2.8.3', './vendor/supabase.js',
+  './js/app.js?v=2.8.3', './js/core.js', './js/fx.js', './js/ui.js', './js/state.js', './js/pages.js',
   './fonts/fraunces-latin-full-normal.woff2', './fonts/fraunces-latin-full-italic.woff2', './fonts/figtree-latin-wght-normal.woff2',
   './icon.svg', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest'
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();   // la nouvelle version s'active au prochain chargement (plus de version figée en cache)
   e.waitUntil(caches.open(VERSION).then((c) => Promise.all(SHELL.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => null)))));
 });
 
