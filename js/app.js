@@ -1,4 +1,4 @@
-/* Jaafar ♥ Audrey — coque de l'appli : connexion, navigation, temps réel, présence, surprises. */
+/* Audrey ♥ Jaafar — coque de l'appli : connexion, navigation, temps réel, présence, surprises. */
 import { $, $$, esc, sb, hasSdk, q, cache, store, outbox, send, uuid, normalize, isOnline, log, net, PEOPLE, VERSION, loadCustomGestures, loadNotifications, notifList, notifUnread, markNotifsRead, clearNotifs } from './core.js';
 import { S, hooks, isJaafar, partnerName } from './state.js';
 import { ICON, toast, toastError, overlay, anyOverlayOpen, confirmDialog, moodOf, gestureOf, gestureLabel, gestureTone, hugView, notifView, notifRoute, TENDRE, CLASHS, timeIn, hourIn, dayIn, daysBetween } from './ui.js';
@@ -56,7 +56,7 @@ function personFromSession(session) {
 const PIN_LEN = 6, MAX_FAILS = 3, PAUSE_S = 30;
 function renderLogin(message) {
   stopTimers();
-  document.title = 'Jaafar ♥ Audrey';
+  document.title = 'Audrey ♥ Jaafar';
   let who = store.get('last-who');
   if (!PEOPLE[who]) who = null;
   let digits = '';
@@ -64,7 +64,7 @@ function renderLogin(message) {
     <main class="login">
       <div class="card login-card">
         <div>
-          <h1>Jaafar <span class="amp">&amp;</span> Audrey</h1>
+          <h1>Audrey <span class="amp">&amp;</span> Jaafar</h1>
           <p class="lede">Deux villes, un même ciel. Qui ouvre notre petit monde&nbsp;?</p>
           <div class="who" role="group" aria-label="Qui es-tu ?">
             ${Object.keys(PEOPLE).map((n, i) => `<button type="button" data-who="${n}" aria-pressed="${n === who}">
@@ -242,7 +242,7 @@ function renderShell() {
   root.innerHTML = `
     <div class="shell">
       <header class="topbar">
-        <button type="button" class="brand" id="brand" aria-label="Jaafar et Audrey">${HEART}<span>J &amp; A</span></button>
+        <button type="button" class="brand" id="brand" aria-label="Audrey et Jaafar">${HEART}<span>A &amp; J</span></button>
         <span class="presence" id="presence" title="Présence"><i class="dot"></i><span>${esc(partnerName())}</span></span>
         <button type="button" class="icon-btn bell" id="bell" aria-label="Notifications">${ICON.bell}<span class="nbadge" id="nbadge" hidden></span></button>
         <a class="icon-btn" href="#/reglages" aria-label="Réglages">${ICON.gear}</a>
@@ -279,7 +279,7 @@ function route() {
   S.route = name;
   const def = PAGES[name];
   $$('.tab').forEach((t) => (t.dataset.tab === def.tab ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current')));
-  document.title = `${def.title} · Jaafar ♥ Audrey`;
+  document.title = `${def.title} · Audrey ♥ Jaafar`;
   const view = $('#view');
   const doRender = () => {
     try {
@@ -448,6 +448,33 @@ function renderPresence() {
   tx.textContent = txt;
   el.setAttribute('title', S.partnerOnline ? `${pn} est en ligne` : seen ? `${pn}, dernière connexion : ${new Date(seen).toLocaleString('fr-FR')}` : pn);
   el.title = `${txt}. Il est ${timeIn(PEOPLE[pn]?.tz || 'Europe/Paris')} chez ${pn === 'Audrey' ? 'elle' : 'lui'}.`;
+  renderSeenLine(pn, seen);
+}
+
+// Ligne bien visible sous la photo du partenaire : « dernière fois vu·e »
+function renderSeenLine(pn, seen) {
+  const line = document.querySelector(`[data-seen-of="${CSS.escape(pn)}"]`);
+  if (!line) return;
+  const her = pn === 'Audrey';
+  if (S.partnerOnline) {
+    line.hidden = false;
+    line.className = 'seen on';
+    line.innerHTML = `<span class="pdot"></span>En ligne maintenant`;
+    line.title = `${pn} est connecté${her ? 'e' : ''} en ce moment`;
+    return;
+  }
+  if (!seen) { line.hidden = true; return; }
+  const mins = (Date.now() - new Date(seen).getTime()) / 6e4;
+  let ago;
+  if (mins < 2) ago = "à l'instant";
+  else if (mins < 60) ago = `il y a ${Math.round(mins)} min`;
+  else if (mins < 1440) { const h = Math.round(mins / 60); ago = `il y a ${h} h`; }
+  else if (mins < 2880) ago = 'hier';
+  else ago = `il y a ${Math.round(mins / 1440)} jours`;
+  line.hidden = false;
+  line.className = 'seen';
+  line.innerHTML = `<span class="pdot"></span>Vu${her ? 'e' : ''} ${ago}`;
+  line.title = `${pn}, dernière connexion : ${new Date(seen).toLocaleString('fr-FR')}`;
 }
 setInterval(() => { if (S.me && !document.hidden) renderPresence(); }, 30000);
 
@@ -489,10 +516,11 @@ function setBadges() {
   const set = (r, v) => { const b = $(`[data-badge="${r}"]`); if (b) { b.hidden = !v; b.textContent = v; b.setAttribute('aria-label', v ? 'nouveau' : ''); } };
   set('compliments', c ? String(c) : '');
   set('question', qBadge);
-  const base = S.route && PAGES[S.route] ? `${PAGES[S.route].title} · Jaafar ♥ Audrey` : 'Jaafar ♥ Audrey';
+  const base = S.route && PAGES[S.route] ? `${PAGES[S.route].title} · Audrey ♥ Jaafar` : 'Audrey ♥ Jaafar';
   document.title = c ? `(${c}) ${base}` : base;
 }
 hooks.setBadges = setBadges;
+hooks.renderPresence = renderPresence;
 
 /* =====================================================================
    Centre de notifications (cloche, lu / non-lu)

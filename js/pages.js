@@ -66,7 +66,7 @@ const cBtnHtml = (r) => `<button type="button" class="gest-btn ${r.tone === 'cla
 export function gestureListHtml(tone) {
   const base = (tone === 'clash' ? CLASHS : TENDRE).map(gBtnHtml).join('');
   const customs = customGestures(tone).map(cBtnHtml).join('');
-  const create = tone === 'clash' ? `<button type="button" class="gest-btn create" data-create="clash" aria-label="Créer un clash"><span>➕</span>Créer</button>` : '';
+  const create = `<button type="button" class="gest-btn create" data-create="${tone}" aria-label="${tone === 'clash' ? 'Créer un clash' : 'Créer un geste'}"><span>➕</span>Créer</button>`;
   return base + customs + create;
 }
 
@@ -74,22 +74,29 @@ export function fillGestureList(container, tone, afterSend) {
   if (!container) return;
   container.innerHTML = gestureListHtml(tone);
   $$('[data-hug],[data-custom]', container).forEach((b) => b.addEventListener('click', async () => { await fireGesture(b); if (afterSend) afterSend(); }));
-  $$('[data-create]', container).forEach((b) => b.addEventListener('click', () => openCustomClashCreator(() => fillGestureList(container, tone, afterSend))));
+  $$('[data-create]', container).forEach((b) => b.addEventListener('click', () => openCustomGestureCreator(b.dataset.create, () => fillGestureList(container, tone, afterSend))));
 }
 
-const CLASH_EMOJIS = ['😤', '😠', '🙄', '😒', '💢', '😡', '🤬', '😾', '👿', '🙃', '📵', '🧦'];
-export function openCustomClashCreator(onDone) {
-  let emoji = '💢';
+const GESTURE_EMOJIS = {
+  tendre: ['🤗', '😘', '🫶', '💕', '🌹', '☀️', '🌙', '🍵', '💌', '🥰', '✨', '💞'],
+  clash: ['😤', '😠', '🙄', '😒', '💢', '😡', '🤬', '😾', '👿', '🙃', '📵', '🧦']
+};
+export function openCustomGestureCreator(tone, onDone) {
+  const clash = tone === 'clash';
+  let emoji = clash ? '💢' : '💗';
+  const WORDS = clash
+    ? { title: 'Créer un clash', hint: "Un petit clash rien qu'à vous, réutilisable ensuite par tous les deux.", ph: 'Ex. Tu as encore volé la couette', add: 'Ajouter ce clash', ok: 'Clash ajouté 💢', list: 'Vos clashs perso' }
+    : { title: 'Créer un geste', hint: 'Un petit geste rien qu\'à vous, réutilisable ensuite par tous les deux.', ph: "Ex. Je t'envoie plein d'amour", add: 'Ajouter ce geste', ok: 'Geste ajouté 💗', list: 'Vos gestes perso' };
   const o = overlay(`<div class="card sheet clash-creator">
-    <div class="card-head"><h2>Créer un clash</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
-    <p class="muted small">Un petit clash rien qu'à vous, réutilisable ensuite par tous les deux.</p>
+    <div class="card-head"><h2>${WORDS.title}</h2><button type="button" class="link-btn" data-close>Fermer</button></div>
+    <p class="muted small">${WORDS.hint}</p>
     <span class="lbl">Emoji</span>
-    <div class="emoji-row" id="cc-emojis">${CLASH_EMOJIS.map((em) => `<button type="button" class="emoji-opt ${em === emoji ? 'on' : ''}" data-e="${em}">${em}</button>`).join('')}</div>
+    <div class="emoji-row" id="cc-emojis">${GESTURE_EMOJIS[clash ? 'clash' : 'tendre'].map((em) => `<button type="button" class="emoji-opt ${em === emoji ? 'on' : ''}" data-e="${em}">${em}</button>`).join('')}</div>
     <input class="field" id="cc-emoji" maxlength="4" aria-label="Autre emoji" placeholder="…ou colle ton emoji" style="margin-top:8px">
-    <span class="lbl" style="margin-top:12px">Texte du clash</span>
-    <input class="field" id="cc-label" maxlength="40" placeholder="Ex. Tu as encore volé la couette" aria-label="Texte du clash">
+    <span class="lbl" style="margin-top:12px">Texte ${clash ? 'du clash' : 'du geste'}</span>
+    <input class="field" id="cc-label" maxlength="40" placeholder="${WORDS.ph}" aria-label="Texte du geste">
     <p class="err" id="cc-err" role="alert"></p>
-    <button type="button" class="btn block" id="cc-add">Ajouter ce clash</button>
+    <button type="button" class="btn block" id="cc-add">${WORDS.add}</button>
     <div id="cc-list" class="cc-list"></div>
   </div>`);
   $('[data-close]', o.el).addEventListener('click', () => o.close());
@@ -98,9 +105,9 @@ export function openCustomClashCreator(onDone) {
   emojiInput.addEventListener('input', () => { const v = emojiInput.value.trim(); if (v) { emoji = v.slice(0, 4); $$('.emoji-opt', o.el).forEach((x) => x.classList.remove('on')); } });
 
   const renderList = () => {
-    const list = customGestures('clash');
+    const list = customGestures(tone);
     $('#cc-list', o.el).innerHTML = list.length
-      ? `<span class="lbl" style="margin-top:16px;display:block">Vos clashs perso</span>` + list.map((r) => `<div class="cc-item"><span>${esc(r.emoji)} ${esc(r.label)}</span><button type="button" class="cc-del" data-del="${esc(r.id)}" aria-label="Supprimer ce clash">✕</button></div>`).join('')
+      ? `<span class="lbl" style="margin-top:16px;display:block">${WORDS.list}</span>` + list.map((r) => `<div class="cc-item"><span>${esc(r.emoji)} ${esc(r.label)}</span><button type="button" class="cc-del" data-del="${esc(r.id)}" aria-label="Supprimer">✕</button></div>`).join('')
       : '';
     $$('.cc-del', o.el).forEach((b) => b.addEventListener('click', async () => {
       try { await send({ type: 'delete', table: 'custom_gestures', match: { id: b.dataset.del } }); await loadCustomGestures(); renderList(); if (onDone) onDone(); }
@@ -110,18 +117,20 @@ export function openCustomClashCreator(onDone) {
 
   $('#cc-add', o.el).addEventListener('click', async (ev) => {
     const label = $('#cc-label', o.el).value.trim();
-    if (!label) { $('#cc-err', o.el).textContent = 'Écris le texte de ton clash.'; return; }
+    if (!label) { $('#cc-err', o.el).textContent = `Écris le texte ${clash ? 'de ton clash' : 'de ton geste'}.`; return; }
     await busy(ev.currentTarget, async () => {
       try {
-        await send({ type: 'insert', table: 'custom_gestures', row: { id: uuid(), tone: 'clash', emoji: emoji || '💢', label } });
+        await send({ type: 'insert', table: 'custom_gestures', row: { id: uuid(), tone, emoji: emoji || (clash ? '💢' : '💗'), label } });
         await loadCustomGestures();
-        $('#cc-label', o.el).value = ''; buzz(10); toast('Clash ajouté 💢');
+        $('#cc-label', o.el).value = ''; buzz(10); toast(WORDS.ok);
         renderList(); if (onDone) onDone();
       } catch (e) { $('#cc-err', o.el).textContent = normalize(e).message; }
     });
   });
   renderList();
 }
+// compat : ancien nom
+export const openCustomClashCreator = (onDone) => openCustomGestureCreator('clash', onDone);
 
 function homePage(el) {
   const me = S.me, pn = partnerName();
@@ -152,6 +161,7 @@ function homePage(el) {
                 ? `<button type="button" class="where edit" id="h-place" aria-label="Changer mon lieu">${esc(livePlace(n)) || 'Ajouter mon lieu'} <span class="caret">▾</span></button>`
                 : `<span class="where">${esc(livePlace(n))}</span>`}
               <span class="md" data-mood-of="${n}"></span>
+              ${n === me.name ? '' : `<span class="seen" data-seen-of="${esc(n)}" hidden></span>`}
             </div>`).join('')}
         </div>
       </article>
@@ -372,6 +382,7 @@ function homePage(el) {
       const box = $(`[data-mood-of="${n}"]`, el);
       if (box) box.textContent = m ? `${moodOf(m.mood)?.e || ''} ${moodLabel(m.mood, n)}` : '';
     }
+    hooks.renderPresence && hooks.renderPresence();
     renderCountdown();
     // moods du jour
     const mbox = $('#h-moods', el);
